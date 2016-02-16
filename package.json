@@ -1,0 +1,17 @@
+{
+  "name": "happy-crud",
+  "version": "0.0.1",
+  "description": "Happy Crud",
+  "main": "index.js",
+  "scripts": {
+    "test": "./node_modules/.bin/mocha tests"
+  },
+  "author": "Mohammad Anwari <mdamt@mdamt.net> (http://aksi.mdamt.net/)",
+  "license": "MIT",
+  "devDependencies": {
+    "mocha": "^2.4.5"
+  },
+  "dependencies": {
+    "hapi": "^13.0.0"
+  }
+}
