@@ -3,13 +3,26 @@ const pluralize = require('pluralize');
 
 class CrudApi {
 
-constructor(server, options, next) {
+constructor(server, controller, options) {
   this.server = server;
-  this.options = options || {};
-}
+  this.options = options;
+  this.attributes = require('../package.json');
+  this.register = function() {};
 
-setController(controller) {
+  let prefix = {};
+  if (options.mount) {
+    prefix = {
+      prefix: options.mount
+    }
+  }
+  server.register({
+    register: this
+  }, {
+    select: ['api'],
+    routes: prefix
+  })
   this.controller = controller;
+  this.install(options);
 }
 
 install(options) {
@@ -82,15 +95,7 @@ installCreate(options) {
 
 } // Class
 
-exports.register = function(server, options, next) {
-  if (!global.CrudApi) {
-    global.CrudApi = new CrudApi(server, options, next);
-  }
-  next();
-};
 
-exports.register.attributes = {
-  pkg: require("../package.json")
-};
+module.exports = CrudApi;
 
 

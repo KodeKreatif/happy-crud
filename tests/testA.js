@@ -1,6 +1,7 @@
 'use strict';
 const BaseController = require('../api/base-controller');
 const Sqlite3Model = require('../api/sqlite3-model');
+const CrudApi = require('../api');
 const BaseTest = require('./base-test');
 const should = require('should');
 const Sqlite3 = require('sqlite3');
@@ -26,17 +27,18 @@ constructor(server) {
     c: Number
   }
 
+  const options = {
+    word: 'user',
+    path: '/api',
+    mount: '/',
+  }
+
   const db = this.setupDb();
   const table = 'testa';
   const model = new Sqlite3Model(db, table, schema);
   const ctrl = new ControllerA(model);
-  global.CrudApi.setController(ctrl);
+  const api = new CrudApi(server, ctrl, options);
 
-  const options = {
-    word: 'user',
-    path: '/api'
-  }
-  global.CrudApi.install(options);
 }
 
 doTest() {

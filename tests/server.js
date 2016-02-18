@@ -1,6 +1,5 @@
 'use strict';
 const Hapi = require('hapi');
-const sources = require("./api");
 
 const server = new Hapi.Server();
 const port = process.env.PORT || 3000;
@@ -14,7 +13,6 @@ server.connection({
     }
   }
 });
-sources.populate(server);
 
 server.state('data', {
   ttl: null,
