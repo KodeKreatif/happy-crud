@@ -41,6 +41,16 @@ update(request, reply) {
   });
 }
 
+delete(request, reply) {
+  const self = this;
+  const key = request.payload.key;
+
+  self.model.delete(key).then((result) => {
+    reply(result);
+  }).catch((err) => {
+    reply(err).statusCode(500);
+  });
+}
 
 
 validation() {

@@ -8,6 +8,7 @@ constructor(db, table, schema) {
   this.impl.create = this.sqliteCreate;
   this.impl.read = this.sqliteRead;
   this.impl.update = this.sqliteUpdate;
+  this.impl.delete = this.sqliteDelete;
 }
 
 sqliteCreate(data) {
@@ -98,6 +99,31 @@ sqliteUpdate(key, data) {
         sql += '(' + marks.join(',') + ')';
 
     self.db.run(sql, values, function(err, result) {
+      if (err) {
+        reject(err);
+        return;
+      }
+      resolve({
+        changes: this.changes
+      });
+    });
+  });
+}
+
+sqliteDelete(key) {
+  const self = this;
+  return new Promise((resolve, reject) => {
+    let keyField;
+    for (let fieldName of (Object.keys(self.schema))) {
+      const fieldRecord = self.schema[fieldName];
+      if (fieldRecord && fieldRecord.primaryKey) {
+        keyField = fieldName;
+        break;
+      }
+    }
+
+    let sql = `delete from ${self.table} where ${keyField} = ?`;
+    self.db.run(sql, [key], function(err, result) {
       if (err) {
         reject(err);
         return;

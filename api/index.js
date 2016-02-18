@@ -67,8 +67,8 @@ install(options) {
   self.installCreate(options);
   self.installRead(options);
   self.installUpdate(options);
+  self.installDelete(options);
   /*
-  installDelete(options);
   installList(options);
   */
 }
@@ -132,6 +132,27 @@ installUpdate(options) {
   }
   self.server.route(config);
 }
+
+installDelete(options) {
+  const self = this;
+  var config =
+  {
+    method: 'DELETE',
+    path: `${options.path}/${options.word[1]}`,
+    handler: function handleDelete(request, reply) {
+      return self.controller.delete(request, reply);
+    },
+    config: {
+      auth: options.authentications.delete|| null,
+    }
+  };
+  if (self.controller.validation().update) {
+    config.config.validate = config.config.validate || {};
+    config.config.validate.params = self.controller.validation().delete;
+  }
+  self.server.route(config);
+}
+
 
 
 

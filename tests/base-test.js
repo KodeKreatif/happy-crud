@@ -55,6 +55,22 @@ createPutRequest(data) {
   return request;
 }
 
+createDeleteRequest(data) {
+  const self = this;
+  const request = {
+    method: 'DELETE',
+    url: data.url,
+    payload: data.payload,
+    headers: {}
+  };
+
+  if (self.auth) {
+    request.headers['authorization'] = self.auth;
+  }
+  return request;
+}
+
+
 
 
 initController() {

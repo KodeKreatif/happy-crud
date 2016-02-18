@@ -33,6 +33,14 @@ update() {
   }
 }
 
+delete() {
+  if (this.impl.delete) {
+    return this.impl.delete.apply(this, arguments);
+  } else {
+    throw Error('Implementation of "update" not exists');
+  }
+}
+
 
 
 } // class BaseModel
