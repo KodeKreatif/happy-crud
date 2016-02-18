@@ -40,6 +40,21 @@ createGetRequest(data) {
   return request;
 }
 
+createPutRequest(data) {
+  const self = this;
+  const request = {
+    method: 'PUT',
+    url: data.url,
+    payload: data.payload,
+    headers: {}
+  };
+
+  if (self.auth) {
+    request.headers['authorization'] = self.auth;
+  }
+  return request;
+}
+
 
 
 initController() {

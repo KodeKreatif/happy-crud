@@ -25,6 +25,15 @@ read() {
   }
 }
 
+update() {
+  if (this.impl.update) {
+    return this.impl.update.apply(this, arguments);
+  } else {
+    throw Error('Implementation of "update" not exists');
+  }
+}
+
+
 
 } // class BaseModel
 

@@ -66,8 +66,8 @@ install(options) {
 
   self.installCreate(options);
   self.installRead(options);
+  self.installUpdate(options);
   /*
-  installUpdate(options);
   installDelete(options);
   installList(options);
   */
@@ -112,6 +112,28 @@ installRead(options) {
   }
   self.server.route(config);
 }
+
+installUpdate(options) {
+  const self = this;
+  var config =
+  {
+    method: 'PUT',
+    path: `${options.path}/${options.word[0]}/{key}`,
+    handler: function handleUpdate(request, reply) {
+      return self.controller.update(request, reply);
+    },
+    config: {
+      auth: options.authentications.update|| null,
+    }
+  };
+  if (self.controller.validation().update) {
+    config.config.validate = config.config.validate || {};
+    config.config.validate.params = self.controller.validation().update;
+  }
+  self.server.route(config);
+}
+
+
 
 
 

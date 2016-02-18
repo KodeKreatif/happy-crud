@@ -29,6 +29,19 @@ read(request, reply) {
   });
 }
 
+update(request, reply) {
+  const self = this;
+  const key = request.params.key;
+  const data = request.payload;
+
+  self.model.update(key, data).then((result) => {
+    reply(result);
+  }).catch((err) => {
+    reply(err).statusCode(500);
+  });
+}
+
+
 
 validation() {
   return {

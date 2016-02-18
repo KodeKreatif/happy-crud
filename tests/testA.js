@@ -99,8 +99,28 @@ doTest() {
     });
 
 
-  }); // describe Basic creation
+  }); // describe Basic read
+
+  describe('Basic update', ()=> {
+    it('should be able to update a record', (done)=> {
+      const key = 1;
+      const request = self.createPutRequest({
+        url: `http://localhost:3030/api/user/${key}`,
+        payload: {
+          b: 'b1',
+          c: 2
+        }
+      });
+      self.server.inject(request, (response) => {
+        response.statusCode.should.equal(200);
+        const r = JSON.parse(response.payload);
+        r.changes.should.equal(1);
+        done();
+      });
+    });
+  }); // describe Basic update
 }
+
 
 } // class TestA
 
