@@ -14,7 +14,7 @@ class TestA extends BaseTest {
 setupDb() {
   const db = new Sqlite3.Database(':memory:');
   db.serialize(function() {
-    db.run("CREATE TABLE testa (a TEXT, b TEXT, c INTEGER)");
+    db.run("CREATE TABLE testa (id INTEGER PRIMARY KEY AUTOINCREMENT, a TEXT, b TEXT, c INTEGER)");
   });
   return db;
 }
@@ -22,9 +22,13 @@ setupDb() {
 constructor(server) {
   super(server);
   const schema = {
+    id: {
+      type: Number,
+      autoIncrement: true
+    },
     a: String,
     b: String,
-    c: Number
+    c: Number,
   }
 
   const options = {
@@ -54,10 +58,26 @@ doTest() {
       self.server.inject(request, (response) => {
         response.statusCode.should.equal(200);
         const r = JSON.parse(response.payload);
-        r.lastId.should.greaterThan(0);
+        r.lastId.should.equal(1);
         done();
       });
     });
+
+    it('should be able to create another record with correct lastId', (done)=> {
+      const request = self.createPostRequest({
+        url: 'http://localhost:3030/api/users',
+        payload: {
+          a:'a', b: 'b', c: 1
+        }
+      });
+      self.server.inject(request, (response) => {
+        response.statusCode.should.equal(200);
+        const r = JSON.parse(response.payload);
+        r.lastId.should.equal(2);
+        done();
+      });
+    });
+
   });
 }
 
