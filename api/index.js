@@ -65,8 +65,8 @@ install(options) {
   }
 
   self.installCreate(options);
+  self.installRead(options);
   /*
-  installRead(options);
   installUpdate(options);
   installDelete(options);
   installList(options);
@@ -92,6 +92,28 @@ installCreate(options) {
   }
   self.server.route(config);
 }
+
+installRead(options) {
+  const self = this;
+  var config =
+  {
+    method: 'GET',
+    path: `${options.path}/${options.word[0]}/{key}`,
+    handler: function handleRead(request, reply) {
+      return self.controller.read(request, reply);
+    },
+    config: {
+      auth: options.authentications.read || null,
+    }
+  };
+  if (self.controller.validation().read) {
+    config.config.validate = config.config.validate || {};
+    config.config.validate.params = self.controller.validation().read;
+  }
+  self.server.route(config);
+}
+
+
 
 } // Class
 

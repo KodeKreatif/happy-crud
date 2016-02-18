@@ -24,6 +24,7 @@ constructor(server) {
   const schema = {
     id: {
       type: Number,
+      primaryKey: true,
       autoIncrement: true
     },
     a: String,
@@ -47,7 +48,7 @@ constructor(server) {
 
 doTest() {
   const self = this;
-  describe('Basic', ()=> {
+  describe('Basic creation', ()=> {
     it('should be able to create a record', (done)=> {
       const request = self.createPostRequest({
         url: 'http://localhost:3030/api/users',
@@ -78,7 +79,27 @@ doTest() {
       });
     });
 
-  });
+  }); // describe Basic creation
+
+  describe('Basic read', ()=> {
+    it('should be able to read a record', (done)=> {
+      const key = 1;
+      const request = self.createGetRequest({
+        url: `http://localhost:3030/api/user/${key}`,
+      });
+      self.server.inject(request, (response) => {
+        response.statusCode.should.equal(200);
+        const r = JSON.parse(response.payload);
+        r.id.should.equal(1);
+        r.a.should.equal('a');
+        r.b.should.equal('b');
+        r.c.should.equal(1);
+        done();
+      });
+    });
+
+
+  }); // describe Basic creation
 }
 
 } // class TestA

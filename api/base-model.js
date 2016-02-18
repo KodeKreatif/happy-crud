@@ -13,9 +13,18 @@ create() {
   if (this.impl.create) {
     return this.impl.create.apply(this, arguments);
   } else {
-    throw Error('Implementation not exists');
+    throw Error('Implementation of "create" not exists');
   }
 }
+
+read() {
+  if (this.impl.read) {
+    return this.impl.read.apply(this, arguments);
+  } else {
+    throw Error('Implementation of "read" not exists');
+  }
+}
+
 
 } // class BaseModel
 

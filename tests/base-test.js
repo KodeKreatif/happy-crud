@@ -26,6 +26,22 @@ createPostRequest(data) {
   return request;
 }
 
+createGetRequest(data) {
+  const self = this;
+  const request = {
+    method: 'GET',
+    url: `${data.url}`,
+    headers: {}
+  };
+
+  if (self.auth) {
+    request.headers['authorization'] = self.auth;
+  }
+  return request;
+}
+
+
+
 initController() {
   const self = this;
 
