@@ -41,6 +41,13 @@ delete() {
   }
 }
 
+list() {
+  if (this.impl.list) {
+    return this.impl.list.apply(this, arguments);
+  } else {
+    throw Error('Implementation of "list" not exists');
+  }
+}
 
 
 } // class BaseModel

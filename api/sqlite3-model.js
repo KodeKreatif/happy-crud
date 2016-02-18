@@ -9,6 +9,7 @@ constructor(db, table, schema) {
   this.impl.read = this.sqliteRead;
   this.impl.update = this.sqliteUpdate;
   this.impl.delete = this.sqliteDelete;
+  this.impl.list = this.sqliteList;
 }
 
 sqliteCreate(data) {
@@ -134,6 +135,40 @@ sqliteDelete(key) {
     });
   });
 }
+
+sqliteList(params) {
+  const self = this;
+  return new Promise((resolve, reject) => {
+    const fields = '*';
+    if (params && Array.isArray(params.fields)) {
+      fields = params.fields.join(',');
+    }
+    let filterArgs = '';
+    let args = '';
+
+    let sqlCount = `select count(1) from ${self.table} ${filterArgs}`;
+    self.db.get(sqlCount, [], function(err, count) {
+      if (err) {
+        reject(err);
+        return;
+      }
+      let sqlAll = `select ${fields} from ${self.table} ${args}`;
+      self.db.all(sqlAll, [], function(err, results) {
+        if (err) {
+          reject(err);
+          return;
+        }
+        resolve({
+          data: results,
+          totalCount: count['count(1)']
+        });
+      });
+
+    });
+  });
+}
+
+
 
 
 } // class Sqlite3Model

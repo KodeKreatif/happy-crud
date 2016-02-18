@@ -68,9 +68,7 @@ install(options) {
   self.installRead(options);
   self.installUpdate(options);
   self.installDelete(options);
-  /*
-  installList(options);
-  */
+  self.installList(options);
 }
 
 installCreate(options) {
@@ -149,6 +147,26 @@ installDelete(options) {
   if (self.controller.validation().update) {
     config.config.validate = config.config.validate || {};
     config.config.validate.params = self.controller.validation().delete;
+  }
+  self.server.route(config);
+}
+
+installList(options) {
+  const self = this;
+  var config =
+  {
+    method: 'GET',
+    path: `${options.path}/${options.word[1]}`,
+    handler: function handleList(request, reply) {
+      return self.controller.list(request, reply);
+    },
+    config: {
+      auth: options.authentications.list|| null,
+    }
+  };
+  if (self.controller.validation().list) {
+    config.config.validate = config.config.validate || {};
+    config.config.validate.params = self.controller.validation().list;
   }
   self.server.route(config);
 }

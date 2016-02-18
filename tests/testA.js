@@ -138,6 +138,22 @@ doTest() {
     });
   }); // describe Basic delete
 
+  describe('Basic list', ()=> {
+    it('should be able to list records', (done)=> {
+      const request = self.createGetRequest({
+        url: `http://localhost:3030/api/users`,
+      });
+      self.server.inject(request, (response) => {
+        response.statusCode.should.equal(200);
+        const r = JSON.parse(response.payload);
+        r.totalCount.should.equal(2);
+        r.data.length.should.equal(2);
+        done();
+      });
+    });
+  }); // describe Basic delete
+
+
 }
 
 

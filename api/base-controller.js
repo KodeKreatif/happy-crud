@@ -52,6 +52,18 @@ delete(request, reply) {
   });
 }
 
+list(request, reply) {
+  const self = this;
+  const args = request.queries;
+
+  self.model.list(args).then((result) => {
+    reply(result);
+  }).catch((err) => {
+    reply(err).statusCode(500);
+  });
+}
+
+
 
 validation() {
   return {
