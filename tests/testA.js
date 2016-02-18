@@ -1,7 +1,7 @@
 'use strict';
 const BaseController = require('../api/base-controller');
 const Sqlite3Model = require('../api/sqlite3-model');
-const CrudApi = require('../api');
+const HappyCrud = require('../api');
 const BaseTest = require('./base-test');
 const should = require('should');
 const Sqlite3 = require('sqlite3');
@@ -42,7 +42,7 @@ constructor(server) {
   const table = 'testa';
   const model = new Sqlite3Model(db, table, schema);
   const ctrl = new ControllerA(model);
-  const api = new CrudApi(server, ctrl, options);
+  const api = new HappyCrud(server, ctrl, options);
 
 }
 

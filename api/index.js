@@ -1,7 +1,7 @@
 'use strict';
 const pluralize = require('pluralize');
 
-class CrudApi {
+class HappyCrud {
 
 constructor(server, controller, options) {
   this.server = server;
@@ -179,6 +179,6 @@ installList(options) {
 } // Class
 
 
-module.exports = CrudApi;
+module.exports = HappyCrud;
 
 
