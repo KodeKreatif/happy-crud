@@ -2,30 +2,38 @@
 
 const BaseModel = require('../api/base-model');
 const mongoose = require('mongoose');
+const events = require('events');
+
 class MongoDbModel extends BaseModel {
 
-constructor(col, schema) {
+constructor(db, col, schema) {
   super(null, col, schema);
-
-  this.model = function(){
-    var registered = false;
-    var m;
-    try {
-      m = mongoose.model(col);
-      registered = true;
-    } catch(e) {
-      // Do nothing. If there is an error, new scheam will be initiated
-    }
-    if (registered) return m;
-    var s = new mongoose.Schema(schema, {collection : col});
-    m = mongoose.model(col, s);
-    return m;
-  }
+  var self = this;
   this.impl.create = this.mongoCreate;
   this.impl.read = this.mongoRead;
   this.impl.update = this.mongoUpdate;
   this.impl.delete = this.mongoDelete;
   this.impl.list = this.mongoList;
+  
+  // Setup db and emit 'ready' when connection succeeded
+  mongoose.connect(db);
+  mongoose.connection.once('open', () => {
+    self.model = function(){
+      var registered = false;
+      var m;
+      try {
+        m = mongoose.model(col);
+        registered = true;
+      } catch(e) {
+        // Do nothing. If there is an error, new scheam will be initiated
+      }
+      if (registered) return m;
+      var s = new mongoose.Schema(schema, {collection : col});
+      m = mongoose.model(col, s);
+      return m;
+    }
+    self.emit('ready');
+  })
 }
 
 mongoCreate(data) {
@@ -98,8 +106,12 @@ mongoList(params) {
   });
 }
 
-
-
-
 } // class MongoDbModel
+
+// Add event emitter capabilities to the class
+Object.keys(events.EventEmitter.prototype).forEach((prop) => {
+  MongoDbModel.prototype[prop] = events.EventEmitter.prototype[prop];
+})
+events.EventEmitter.call(MongoDbModel);
+
 module.exports = MongoDbModel;

@@ -17,6 +17,8 @@ constructor(server) {
   super(server);
   var self = this;
 
+  const db = 'mongodb://localhost/test';
+  const col = 'testb';
   const schema = {
     a: String,
     b: String,
@@ -28,19 +30,17 @@ constructor(server) {
     path: '/api',
     mount: '/',
   }
-
-  const col = 'testb';
-  const model = new MongoDbModel(col, schema);
+  const model = new MongoDbModel(db, col, schema);
   const ctrl = new ControllerMongo(model);
   const api = new HappyCrud(server, ctrl, options);
-
-  // Setup db and return instance in promise
-  mongoose.connect('mongodb://localhost/test');
-  mongoose.connection.once('open', () => {
-    mongoose.connection.db.dropCollection('testb', () => {
+  
+  // clean the collection for new unit testing instance
+  model.on('ready', () => {
+    mongoose.connection.db.dropCollection('col, () => {
       self.emit('ready');
     });
   })
+
 }
 
 doTest() {
@@ -149,10 +149,10 @@ doTest() {
 
 } // class TestMongo
 
+// Add event emitter capabilities to the class
 Object.keys(events.EventEmitter.prototype).forEach((prop) => {
   TestMongo.prototype[prop] = events.EventEmitter.prototype[prop];
 })
-
 events.EventEmitter.call(TestMongo);
 
 module.exports = TestMongo;
