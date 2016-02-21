@@ -40,7 +40,7 @@ By using the code, you will have a complete CRUD endpoints at `/v1/api/user` and
 
 ## Database support
 
-Currently it only supports SQLite version 3. To enable support for another database, you need to implement the actual crud functions by deriving `BaseModel` class (see: `api/base-model.js`)
+Currently it only supports SQLite version 3 and MongoDB. To enable support for another database, you need to implement the actual crud functions by deriving `BaseModel` class (see: `api/base-model.js`)
 
 ## License
 
