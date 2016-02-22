@@ -92,7 +92,7 @@ mongoDelete(key) {
 
 mongoList(params) {
   const self = this;
-  var params = params | {};
+  var params = params || {};
   return new Promise((resolve, reject) => {
     self.model().find(params, (err, result) => {
       if (err) {
