@@ -31,7 +31,7 @@ const db = this.setupDb();
 const table = 'testa';
 const model = new Sqlite3Model(db, table, schema);
 const ctrl = new ControllerA(model);
-const api = new CrudApi(server, ctrl, options);
+const api = new HappyCrud(server, ctrl, options);
 
 
 ```
