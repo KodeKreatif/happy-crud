@@ -33,7 +33,7 @@ constructor(server) {
   const model = new MongoDbModel(db, col, schema);
   const ctrl = new ControllerMongo(model);
   const api = new HappyCrud(server, ctrl, options);
-  
+
   // clean the collection for new unit testing instance
   model.on('ready', () => {
     mongoose.connection.db.dropCollection(col, () => {

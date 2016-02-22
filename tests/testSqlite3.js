@@ -9,7 +9,7 @@ const Sqlite3 = require('sqlite3');
 class ControllerA extends BaseController {
 } // class ModelA
 
-class TestA extends BaseTest {
+class TestSqlite3 extends BaseTest {
 
 setupDb() {
   const db = new Sqlite3.Database(':memory:');
@@ -157,6 +157,6 @@ doTest() {
 }
 
 
-} // class TestA
+} // class TestSqlite3
 
-module.exports = TestA;
+module.exports = TestSqlite3;

@@ -1,6 +1,8 @@
 'use strict';
 
 const BaseModel = require('../api/base-model');
+const events = require('events');
+const process = require('process');
 class Sqlite3Model extends BaseModel {
 
 constructor(db, table, schema) {
@@ -10,6 +12,10 @@ constructor(db, table, schema) {
   this.impl.update = this.sqliteUpdate;
   this.impl.delete = this.sqliteDelete;
   this.impl.list = this.sqliteList;
+  const self = this;
+  process.nextTick(() => {
+    self.emit('ready');
+  });
 }
 
 sqliteCreate(data) {
@@ -168,8 +174,12 @@ sqliteList(params) {
   });
 }
 
-
-
-
 } // class Sqlite3Model
+
+// Add event emitter capabilities to the class
+Object.keys(events.EventEmitter.prototype).forEach((prop) => {
+  Sqlite3Model.prototype[prop] = events.EventEmitter.prototype[prop];
+})
+events.EventEmitter.call(Sqlite3Model);
+
 module.exports = Sqlite3Model;

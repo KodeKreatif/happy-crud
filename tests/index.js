@@ -1,12 +1,22 @@
 'use strict';
 const server = require("./server");
 
-const TestA = require('./testA');
-const testA = new TestA(server);
-testA.test();
 
-const TestMongo = require('./testMongo');
-const testMongo = new TestMongo(server);
-testMongo.on('ready', function(){
-  testMongo.test();
-})
+describe('mongo', function() {
+  const TestMongo = require('./testMongo');
+  const testMongo = new TestMongo(server);
+  before(function(done) {
+    testMongo.once('ready', function() {
+      done();
+    });
+  });
+  testMongo.doTest();
+});
+
+describe('sqlite', function() {
+  const TestSqlite3 = require('./testSqlite3');
+  const testSqlite3 = new TestSqlite3(server);
+  testSqlite3.doTest();
+});
+
+
