@@ -1,4 +1,17 @@
 'use strict';
+const process = require('process');
+const isProduction = (process.env.NODE_ENV === 'production');
+
+const log = function(origin, err) {
+  if (!isProduction) {
+    console.log(`ERROR: ${origin}`);
+    if (err.stack) {
+      console.log(err.stack);
+    } else {
+      console.log(err);
+    }
+  }
+}
 
 class BaseController {
 
@@ -13,6 +26,7 @@ create(request, reply) {
   self.model.create(data).then((result) => {
     reply(result);
   }).catch((err) => {
+    log('Controller::create', err);
     reply(err).statusCode(500);
   });
 }
@@ -25,6 +39,7 @@ read(request, reply) {
   self.model.read(key, fields).then((result) => {
     reply(result);
   }).catch((err) => {
+    log('Controller::read', err);
     reply(err).statusCode(500);
   });
 }
@@ -37,6 +52,7 @@ update(request, reply) {
   self.model.update(key, data).then((result) => {
     reply(result);
   }).catch((err) => {
+    log('Controller::update', err);
     reply(err).statusCode(500);
   });
 }
@@ -48,6 +64,7 @@ delete(request, reply) {
   self.model.delete(key).then((result) => {
     reply(result);
   }).catch((err) => {
+    log('Controller::delete', err);
     reply(err).statusCode(500);
   });
 }
@@ -59,6 +76,7 @@ list(request, reply) {
   self.model.list(args).then((result) => {
     reply(result);
   }).catch((err) => {
+    log('Controller::list', err);
     reply(err).statusCode(500);
   });
 }
