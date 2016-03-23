@@ -101,7 +101,7 @@ installRead(options) {
       return self.controller.read(request, reply);
     },
     config: {
-      auth: options.authentications.read || null,
+      auth: options.authentications.read || false,
     }
   };
   if (self.controller.validation().read) {
@@ -121,7 +121,7 @@ installUpdate(options) {
       return self.controller.update(request, reply);
     },
     config: {
-      auth: options.authentications.update|| null,
+      auth: options.authentications.update|| false,
     }
   };
   if (self.controller.validation().update) {
@@ -141,7 +141,7 @@ installDelete(options) {
       return self.controller.delete(request, reply);
     },
     config: {
-      auth: options.authentications.delete|| null,
+      auth: options.authentications.delete|| false,
     }
   };
   if (self.controller.validation().update) {
@@ -161,7 +161,7 @@ installList(options) {
       return self.controller.list(request, reply);
     },
     config: {
-      auth: options.authentications.list|| null,
+      auth: options.authentications.list|| false,
     }
   };
   if (self.controller.validation().list) {
