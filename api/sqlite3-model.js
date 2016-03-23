@@ -39,6 +39,7 @@ sqliteCreate(data) {
 
     self.db.run(sql, values, function(err, result) {
       if (err) {
+        console.log(err);
         reject(err);
         return;
       }
@@ -70,6 +71,7 @@ sqliteRead(key, filter) {
     let sql = `select ${fields} from ${self.table} where ${keyField} = ?`;
     self.db.get(sql, [key], function(err, result) {
       if (err) {
+        console.log(err);
         reject(err);
         return;
       }
@@ -107,6 +109,7 @@ sqliteUpdate(key, data) {
 
     self.db.run(sql, values, function(err, result) {
       if (err) {
+        console.log(err);
         reject(err);
         return;
       }
@@ -132,6 +135,7 @@ sqliteDelete(key) {
     let sql = `delete from ${self.table} where ${keyField} = ?`;
     self.db.run(sql, [key], function(err, result) {
       if (err) {
+        console.log(err);
         reject(err);
         return;
       }
@@ -150,26 +154,34 @@ sqliteList(params) {
       fields = params.fields.join(',');
     }
     let filterArgs = '';
-    let args = '';
+
+    let page = parseInt(params.page || 1);
+    let limit = parseInt(params.limit || 10);
+    let skip = (page - 1) * limit;
+    let args = 'limit ' + skip + ',' + limit;
 
     let sqlCount = `select count(1) from ${self.table} ${filterArgs}`;
     self.db.get(sqlCount, [], function(err, count) {
       if (err) {
+        console.log(err);
         reject(err);
         return;
       }
       let sqlAll = `select ${fields} from ${self.table} ${args}`;
       self.db.all(sqlAll, [], function(err, results) {
         if (err) {
+          console.log(err);
           reject(err);
           return;
         }
         resolve({
           data: results,
-          totalCount: count['count(1)']
+          totalCount: count['count(1)'],
+          totalPages : count['count(1)'] % limit ? parseInt(count['count(1)'] / limit) + 1 : count['count(1)'] / limit,
+          page : page,
+          limit : limit
         });
       });
-
     });
   });
 }

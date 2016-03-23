@@ -92,17 +92,29 @@ mongoDelete(key) {
 
 mongoList(params) {
   const self = this;
-  var params = params || {};
+  let page = parseInt(params.page || 1);
+  let limit = parseInt(params.limit || 10);
+  let skip = (page - 1) * limit;
+  let args = {};
+
   return new Promise((resolve, reject) => {
-    self.model().find(params, (err, result) => {
+    self.model().count(args, (err, count) => {
       if (err) {
         return reject(err);
       }
-      resolve({
-        data: result,
-        totalCount: result.length
+      self.model().find(args).skip(skip).limit(limit).exec((err, result) => {
+        if (err) {
+          return reject(err);
+        }
+        resolve({
+          data: result,
+          totalCount: count,
+          totalPages : count % limit ? parseInt(count / limit) + 1 : count / limit,
+          page : page,
+          limit : limit
+        });
       });
-    });
+    })
   });
 }
 
