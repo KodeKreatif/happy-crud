@@ -25,6 +25,11 @@ const options = {
   word: 'user',
   path: '/api',
   mount: '/v1',
+
+  // Example of bypassing auth on one of four routes (create, read, update, list).
+  authentications : {
+    list : false
+  }
 }
 
 const db = this.setupDb();
