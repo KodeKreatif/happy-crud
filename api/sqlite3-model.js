@@ -177,8 +177,8 @@ sqliteList(params) {
         resolve({
           data: results,
           totalCount: count['count(1)'],
-          page : page,
           totalPages : count['count(1)'] % limit ? parseInt(count['count(1)'] / limit) + 1 : count['count(1)'] / limit,
+          page : page,
           limit : limit
         });
       });
