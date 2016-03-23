@@ -140,7 +140,45 @@ doTest() {
           const r = JSON.parse(response.payload);
           r.totalCount.should.equal(1);
           r.data.length.should.equal(1);
-          done();
+          const postRequest = self.createPostRequest({
+            url: 'http://localhost:3030/api/mongos',
+            payload: {
+              a:'a', b: 'b', c: 1
+            }
+          });
+          self.server.inject(postRequest, (response) => {
+            self.server.inject(postRequest, (response) => {
+              self.server.inject(postRequest, (response) => {
+                self.server.inject(postRequest, (response) => {
+                  self.server.inject(postRequest, (response) => {
+                    self.server.inject(postRequest, (response) => {
+                      const requestByPage1Limit2 = self.createGetRequest({
+                        url: `http://localhost:3030/api/mongos?page=1&limit=2`,
+                      });
+                      self.server.inject(requestByPage1Limit2, (response) => {
+                        response.statusCode.should.equal(200);
+                        const r = JSON.parse(response.payload);
+                        r.totalCount.should.equal(7);
+                        r.totalPages.should.equal(4);
+                        r.data.length.should.equal(2);
+                        const requestByPage2Limit3 = self.createGetRequest({
+                          url: `http://localhost:3030/api/mongos?page=2&limit=3`,
+                        });
+                        self.server.inject(requestByPage2Limit3, (response) => {
+                          response.statusCode.should.equal(200);
+                          const r = JSON.parse(response.payload);
+                          r.totalCount.should.equal(7);
+                          r.totalPages.should.equal(3);
+                          r.data.length.should.equal(3);
+                          done();
+                        });
+                      });
+                    });
+                  });
+                });
+              });
+            });
+          });
         });
       });
     });
