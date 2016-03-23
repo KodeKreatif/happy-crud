@@ -71,7 +71,7 @@ delete(request, reply) {
 
 list(request, reply) {
   const self = this;
-  const args = request.queries;
+  const args = request.query;
 
   self.model.list(args).then((result) => {
     reply(result);
