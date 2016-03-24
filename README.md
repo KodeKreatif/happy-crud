@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/KodeKreatif/happy-crud.svg?branch=master)](https://travis-ci.org/KodeKreatif/happy-crud)
+
 <img src="https://cloud.githubusercontent.com/assets/2534060/14002981/0cfda8ce-f182-11e5-888f-31d76ebae7e3.png">
 ---
 Happy CRUD is a Hapi crud abstraction.
