@@ -146,45 +146,97 @@ doTest() {
       self.server.inject(request, (response) => {
         response.statusCode.should.equal(200);
         const r = JSON.parse(response.payload);
-        r.totalCount.should.equal(2);
-        r.data.length.should.equal(2);
+        r.totalCount.should.equal(1);
+        r.data.length.should.equal(1);
         const postRequest = self.createPostRequest({
           url: 'http://localhost:3030/api/users',
           payload: {
             a:'a', b: 'b', c: 1
           }
         });
+        const postRequest2 = self.createPostRequest({
+          url: 'http://localhost:3030/api/users',
+          payload: {
+            a:'somestring', b: 'b', c: 2
+          }
+        });
+        const postRequest3 = self.createPostRequest({
+          url: 'http://localhost:3030/api/users',
+          payload: {
+            a:'longersomestring', b: 'b', c: 2
+          }
+        });
         self.server.inject(postRequest, (response) => {
           self.server.inject(postRequest, (response) => {
             self.server.inject(postRequest, (response) => {
-              self.server.inject(postRequest, (response) => {
-                self.server.inject(postRequest, (response) => {
+              self.server.inject(postRequest2, (response) => {
+                self.server.inject(postRequest3, (response) => {
                   const requestByPage1Limit2 = self.createGetRequest({
                     url: `http://localhost:3030/api/users?page=1&limit=2`,
                   });
                   self.server.inject(requestByPage1Limit2, (response) => {
                     response.statusCode.should.equal(200);
                     const r = JSON.parse(response.payload);
-                    r.totalCount.should.equal(7);
-                    r.totalPages.should.equal(4);
+                    r.totalCount.should.equal(6);
+                    r.totalPages.should.equal(3);
                     r.data.length.should.equal(2);
-                    const requestByPage2Limit3 = self.createGetRequest({
-                      url: `http://localhost:3030/api/users?page=2&limit=3`,
-                    });
-                    self.server.inject(requestByPage2Limit3, (response) => {
-                      response.statusCode.should.equal(200);
-                      const r = JSON.parse(response.payload);
-                      r.totalCount.should.equal(7);
-                      r.totalPages.should.equal(3);
-                      r.data.length.should.equal(3);
-                      done();
-                    });
+                    done();
                   });
                 });
               });
             });
           });
         });
+      });
+    });
+    it('should be able to list records with desc sorting', (done)=> {
+      const request = self.createGetRequest({
+        url: `http://localhost:3030/api/users?sortBy=id&sort=desc`,
+      });
+      self.server.inject(request, (response) => {
+        response.statusCode.should.equal(200);
+        const r = JSON.parse(response.payload)
+        should(r.data[0].id).equal(7);
+        done();
+      });
+    });
+    it('should be able to list records with asc sorting', (done)=> {
+      const request = self.createGetRequest({
+        url: `http://localhost:3030/api/users?sortBy=id&sort=asc`,
+      });
+      self.server.inject(request, (response) => {
+        response.statusCode.should.equal(200);
+        const r = JSON.parse(response.payload)
+        should(r.data[0].id).equal(1);
+        done();
+      });
+    });
+    it('should be able to list records with filter', (done)=> {
+      const request = self.createGetRequest({
+        url: `http://localhost:3030/api/users?filterKey=a&filterValue=somestring`,
+      });
+      self.server.inject(request, (response) => {
+        response.statusCode.should.equal(200);
+        const r = JSON.parse(response.payload)
+        should(r.data.length).equal(1);
+        should(r.data[0].a).equal('somestring');
+        should(r.data[0].id).equal(6);
+        done();
+      });
+    });
+    it('should be able to list records with search', (done)=> {
+      const request = self.createGetRequest({
+        url: `http://localhost:3030/api/users?searchKey=a&searchValue=some`,
+      });
+      self.server.inject(request, (response) => {
+        response.statusCode.should.equal(200);
+        const r = JSON.parse(response.payload)
+        should(r.data.length).equal(2);
+        should(r.data[0].a).equal('longersomestring');
+        should(r.data[1].a).equal('somestring');
+        should(r.data[0].id).equal(7);
+        should(r.data[1].id).equal(6);
+        done();
       });
     });
   }); // describe Basic delete

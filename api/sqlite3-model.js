@@ -75,6 +75,9 @@ sqliteRead(key, filter) {
         reject(err);
         return;
       }
+      if (!result) {
+        reject(new Error('Not found'));
+      }
       resolve(result);
     });
   });
@@ -84,9 +87,9 @@ sqliteUpdate(key, data) {
   const self = this;
   return new Promise((resolve, reject) => {
     let keyField;
-    let fields = [];
-    let values = [];
-    let marks = [];
+    let fields = ['id'];
+    let values = [key];
+    let marks = ['?'];
     for (let fieldName of (Object.keys(self.schema))) {
       const fieldRecord = self.schema[fieldName];
       if (fieldRecord && fieldRecord.primaryKey) {
@@ -106,7 +109,6 @@ sqliteUpdate(key, data) {
         sql += '(' + fields.join(',') + ')';
         sql += ' values ';
         sql += '(' + marks.join(',') + ')';
-
     self.db.run(sql, values, function(err, result) {
       if (err) {
         console.log(err);
@@ -154,20 +156,37 @@ sqliteList(params) {
       fields = params.fields.join(',');
     }
     let filterArgs = '';
-
+    if ((params.filterKey && params.filterValue) || (params.searchKey && params.searchValue)) {
+      filterArgs += 'where'
+      if (params.filterKey && params.filterValue) {
+        if (filterArgs != 'where') {
+          filterArgs += ' and';
+        }
+        filterArgs += ' ' + params.filterKey + ' = \'' + params.filterValue + '\'';
+      }
+      
+      if (params.searchKey && params.searchValue) {
+        if (filterArgs != 'where') {
+          filterArgs += ' and';
+        }
+        filterArgs += ' ' + params.searchKey + ' like \'%' + params.searchValue + '%\'';
+      }
+    }
     let page = parseInt(params.page || 1);
     let limit = parseInt(params.limit || 10);
+    let sortby = params.sortby || 'id';
+    let sort = params.sort || 'desc'
     let skip = (page - 1) * limit;
-    let args = 'limit ' + skip + ',' + limit;
+    let args =  ' order by ' + sortby + ' ' + sort + ' limit ' + skip + ',' + limit;
 
-    let sqlCount = `select count(1) from ${self.table} ${filterArgs}`;
+    let sqlCount = `select count(1) from ${self.table} ${filterArgs} ${args}`;
     self.db.get(sqlCount, [], function(err, count) {
       if (err) {
         console.log(err);
         reject(err);
         return;
       }
-      let sqlAll = `select ${fields} from ${self.table} ${args}`;
+      let sqlAll = `select ${fields} from ${self.table} ${filterArgs} ${args}`;
       self.db.all(sqlAll, [], function(err, results) {
         if (err) {
           console.log(err);
