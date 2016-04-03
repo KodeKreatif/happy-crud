@@ -59,8 +59,10 @@ update(request, reply) {
 
 delete(request, reply) {
   const self = this;
+  if (typeof request.payload === 'string') {
+    request.payload = JSON.parse(request.payload);
+  }
   const key = request.payload.key;
-
   self.model.delete(key).then((result) => {
     reply(result);
   }).catch((err) => {
