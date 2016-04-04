@@ -21,6 +21,9 @@ constructor(db, table, schema) {
 sqliteCreate(data) {
   const self = this;
   return new Promise((resolve, reject) => {
+    if (!data) {
+      return reject(new Error('Payload should not be empty'));
+    }
     let fields = [];
     let values = [];
     let marks = [];
@@ -179,7 +182,7 @@ sqliteList(params) {
     let skip = (page - 1) * limit;
     let args =  ' order by ' + sortby + ' ' + sort + ' limit ' + skip + ',' + limit;
 
-    let sqlCount = `select count(1) from ${self.table} ${filterArgs} ${args}`;
+    let sqlCount = `select count(1) from ${self.table} ${filterArgs}`;
     self.db.get(sqlCount, [], function(err, count) {
       if (err) {
         console.log(err);
@@ -193,10 +196,14 @@ sqliteList(params) {
           reject(err);
           return;
         }
+        let totalPages = count['count(1)'] % limit ? parseInt(count['count(1)'] / limit) + 1 : count['count(1)'] / limit;
+        if (totalPages < 1) {
+          totalPages = 1;
+        }
         resolve({
           data: results,
           totalCount: count['count(1)'],
-          totalPages : count['count(1)'] % limit ? parseInt(count['count(1)'] / limit) + 1 : count['count(1)'] / limit,
+          totalPages : totalPages,
           page : page,
           limit : limit
         });
