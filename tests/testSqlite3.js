@@ -189,6 +189,36 @@ doTest() {
         });
       });
     });
+    it('should be able to list records by page 2', (done)=> {
+      const request = self.createGetRequest({
+        url: `http://localhost:3030/api/users?page=2&limit=2`,
+      });
+      self.server.inject(request, (response) => {
+        response.statusCode.should.equal(200);
+        const r = JSON.parse(response.payload);
+        should(r.totalPages).equal(3);
+        should(r.totalCount).equal(6);
+        should(r.page).equal(2);
+        should(r.limit).equal(2);
+        should(r.data.length).equal(2);
+        done();
+      });
+    });
+    it('should be able to list records (empty result) by unexisting page 4', (done)=> {
+      const request = self.createGetRequest({
+        url: `http://localhost:3030/api/users?page=4&limit=2`,
+      });
+      self.server.inject(request, (response) => {
+        response.statusCode.should.equal(200);
+        const r = JSON.parse(response.payload);
+        should(r.totalPages).equal(3);
+        should(r.totalCount).equal(6);
+        should(r.page).equal(4);
+        should(r.limit).equal(2);
+        should(r.data.length).equal(0);
+        done();
+      });
+    });
     it('should be able to list records with desc sorting', (done)=> {
       const request = self.createGetRequest({
         url: `http://localhost:3030/api/users?sortBy=id&sort=desc`,
