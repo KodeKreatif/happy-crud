@@ -172,7 +172,19 @@ sqliteList(params) {
         if (filterArgs != 'where') {
           filterArgs += ' and';
         }
-        filterArgs += ' ' + params.searchKey + ' like \'%' + params.searchValue + '%\'';
+        if (params.searchKey.indexOf(',') > -1) {
+          let keys = params.searchKey.split(',');
+          filterArgs += ' ( ';
+          for (var i in keys) {
+            if (i > 0) {
+              filterArgs += ' or ';
+            }
+            filterArgs += keys[i] + ' like \'%' + params.searchValue + '%\'';
+          }
+          filterArgs += ' ) ';
+        } else {
+          filterArgs += ' ' + params.searchKey + ' like \'%' + params.searchValue + '%\'';
+        }
       }
     }
     let page = parseInt(params.page || 1);
