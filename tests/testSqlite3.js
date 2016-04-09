@@ -151,19 +151,19 @@ doTest() {
         const postRequest = self.createPostRequest({
           url: 'http://localhost:3030/api/users',
           payload: {
-            a:'a', b: 'b', c: 1
+            a:'a', b: 'longersomestring', c: 1
           }
         });
         const postRequest2 = self.createPostRequest({
           url: 'http://localhost:3030/api/users',
           payload: {
-            a:'somestring', b: 'b', c: 2
+            a:'somestring', b: 'longersomestring', c: 2
           }
         });
         const postRequest3 = self.createPostRequest({
           url: 'http://localhost:3030/api/users',
           payload: {
-            a:'longersomestring', b: 'b', c: 2
+            a:'longersomestring', b: 'longersomestring', c: 2
           }
         });
         self.server.inject(postRequest, (response) => {
@@ -266,6 +266,17 @@ doTest() {
         should(r.data[1].a).equal('somestring');
         should(r.data[0].id).equal(7);
         should(r.data[1].id).equal(6);
+        done();
+      });
+    });
+    it('should be able to list records with search within multiple keys', (done)=> {
+      const request = self.createGetRequest({
+        url: `http://localhost:3030/api/users?searchKey=a,b&searchValue=longersome`,
+      });
+      self.server.inject(request, (response) => {
+        response.statusCode.should.equal(200);
+        const r = JSON.parse(response.payload)
+        should(r.data.length).equal(5);
         done();
       });
     });
