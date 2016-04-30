@@ -162,15 +162,12 @@ sqliteList(params) {
     if ((params.filterKey && params.filterValue) || (params.searchKey && params.searchValue)) {
       filterArgs += 'where'
       if (params.filterKey && params.filterValue) {
-        if (filterArgs != 'where') {
-          filterArgs += ' and';
-        }
         filterArgs += ' ' + params.filterKey + ' = \'' + params.filterValue + '\'';
       }
       
       if (params.searchKey && params.searchValue) {
         if (filterArgs != 'where') {
-          filterArgs += ' and';
+          filterArgs += ' or';
         }
         if (params.searchKey.indexOf(',') > -1) {
           let keys = params.searchKey.split(',');
@@ -193,7 +190,6 @@ sqliteList(params) {
     let sort = params.sort || 'desc'
     let skip = (page - 1) * limit;
     let args =  ' order by ' + sortby + ' ' + sort + ' limit ' + skip + ',' + limit;
-
     let sqlCount = `select count(1) from ${self.table} ${filterArgs}`;
     self.db.get(sqlCount, [], function(err, count) {
       if (err) {
