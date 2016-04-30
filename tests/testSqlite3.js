@@ -280,6 +280,17 @@ doTest() {
         done();
       });
     });
+    it('should be able to list records with combined search and filter', (done)=> {
+      const request = self.createGetRequest({
+        url: `http://localhost:3030/api/users?searchKey=a&searchValue=longe&filterKey=a&filterValue=somestring`,
+      });
+      self.server.inject(request, (response) => {
+        response.statusCode.should.equal(200);
+        const r = JSON.parse(response.payload)
+        should(r.data.length).equal(2);
+        done();
+      });
+    });
   }); // describe Basic delete
 }
 
