@@ -96,7 +96,22 @@ mongoList(params) {
   let limit = parseInt(params.limit || 10);
   let skip = (page - 1) * limit;
   let args = {};
-
+  if (params.filterKey && params.filterValue) {
+    if (!args['$or']) {
+      args['$or'] = [];
+    }
+    args['$or'].push({});
+    args['$or'][0][params.filterKey] = params.filterValue;
+  }
+  if (params.searchKey && params.searchValue) {
+    if (!args['$or']) {
+      args['$or'] = [];
+    }
+    args['$or'].push({});
+    let index = args['$or'].length - 1;
+    let regex = new RegExp(params.searchValue, 'i');
+    args['$or'][index][params.searchKey] = regex;
+  }
   return new Promise((resolve, reject) => {
     self.model().count(args, (err, count) => {
       if (err) {

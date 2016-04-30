@@ -23,6 +23,7 @@ constructor(server) {
     a: String,
     b: String,
     c: Number,
+    d: {},
   }
 
   const options = {
@@ -146,12 +147,30 @@ doTest() {
               a:'a', b: 'b', c: 1
             }
           });
+          const postRequest2 = self.createPostRequest({
+            url: 'http://localhost:3030/api/mongos',
+            payload: {
+              a:'somestring1', b: 'longersomestring', c: 2
+            }
+          });
+          const postRequest3 = self.createPostRequest({
+            url: 'http://localhost:3030/api/mongos',
+            payload: {
+              a:'longersomestring', b: 'uniquestring', c: 2
+            }
+          });
+          const postRequest4 = self.createPostRequest({
+            url: 'http://localhost:3030/api/mongos',
+            payload: {
+              a:'longersomestring', b: 'longersomestring', c: 2, d: { deep : 'object'}
+            }
+          });
           self.server.inject(postRequest, (response) => {
             self.server.inject(postRequest, (response) => {
               self.server.inject(postRequest, (response) => {
-                self.server.inject(postRequest, (response) => {
-                  self.server.inject(postRequest, (response) => {
-                    self.server.inject(postRequest, (response) => {
+                self.server.inject(postRequest2, (response) => {
+                  self.server.inject(postRequest3, (response) => {
+                    self.server.inject(postRequest4, (response) => {
                       const requestByPage1Limit2 = self.createGetRequest({
                         url: `http://localhost:3030/api/mongos?page=1&limit=2`,
                       });
@@ -180,6 +199,89 @@ doTest() {
             });
           });
         });
+      });
+    });
+    it('should be able to list records with filter', (done)=> {
+      const request = self.createGetRequest({
+        url: `http://localhost:3030/api/mongos?filterKey=a&filterValue=somestring1`,
+      });
+      self.server.inject(request, (response) => {
+        response.statusCode.should.equal(200);
+        const r = JSON.parse(response.payload);
+        should(r.data.length).equal(1);
+        should(r.data[0].a).equal('somestring1');
+        done();
+      });
+    });
+    it('should be able to list records with wrong filterKey, return nothing', (done)=> {
+      const request = self.createGetRequest({
+        url: `http://localhost:3030/api/mongos?filterKey=abc&filterValue=somestring`,
+      });
+      self.server.inject(request, (response) => {
+        response.statusCode.should.equal(200);
+        const r = JSON.parse(response.payload);
+        should(r.data.length).equal(0);
+        done();
+      });
+    });
+    it('should be able to list records with wrong filterValue, return nothing', (done)=> {
+      const request = self.createGetRequest({
+        url: `http://localhost:3030/api/mongos?filterKey=a&filterValue=somestringthatdoesntexist`,
+      });
+      self.server.inject(request, (response) => {
+        response.statusCode.should.equal(200);
+        const r = JSON.parse(response.payload);
+        should(r.data.length).equal(0);
+        done();
+      });
+    });
+    it('should be able to list records with search', (done)=> {
+      const request = self.createGetRequest({
+        url: `http://localhost:3030/api/mongos?searchKey=a&searchValue=mestr`,
+      });
+      self.server.inject(request, (response) => {
+        response.statusCode.should.equal(200);
+        const r = JSON.parse(response.payload);
+        should(r.data.length).equal(3);
+        should(r.data[0].a.indexOf('mestr')).greaterThan(-1);
+        should(r.data[1].a.indexOf('mestr')).greaterThan(-1);
+        should(r.data[2].a.indexOf('mestr')).greaterThan(-1);
+        done();
+      });
+    });
+    it('should be able to list records with wrong searchKey, return nothing', (done)=> {
+      const request = self.createGetRequest({
+        url: `http://localhost:3030/api/mongos?searchKey=abc&searchValue=somestring`,
+      });
+      self.server.inject(request, (response) => {
+        response.statusCode.should.equal(200);
+        const r = JSON.parse(response.payload);
+        should(r.data.length).equal(0);
+        done();
+      });
+    });
+    it('should be able to list records with wrong searchValue, return nothing', (done)=> {
+      const request = self.createGetRequest({
+        url: `http://localhost:3030/api/mongos?searchKey=a&searchValue=somestringthatdoesntexist`,
+      });
+      self.server.inject(request, (response) => {
+        response.statusCode.should.equal(200);
+        const r = JSON.parse(response.payload);
+        should(r.data.length).equal(0);
+        done();
+      });
+    });
+    it('should be able to list records with combined search and filter', (done)=> {
+      const request = self.createGetRequest({
+        url: `http://localhost:3030/api/mongos?filterKey=a&filterValue=somestring1&searchKey=b&searchValue=uniquestring`,
+      });
+      self.server.inject(request, (response) => {
+        response.statusCode.should.equal(200);
+        const r = JSON.parse(response.payload);
+        should(r.data.length).equal(2);
+        should(r.data[0].a).equal('somestring1');
+        should(r.data[1].b).equal('uniquestring');
+        done();
       });
     });
   }); // describe Basic delete
