@@ -277,6 +277,27 @@ doTest() {
         response.statusCode.should.equal(200);
         const r = JSON.parse(response.payload)
         should(r.data.length).equal(5);
+        should(r.data[0].id).equal(7);
+        should(r.data[0].a).equal('longersomestring');
+        should(r.data[0].b).equal('longersomestring');
+        should(r.data[0].c).equal(2);
+        should(r.data[1].id).equal(6);
+        should(r.data[1].a).equal('somestring');
+        should(r.data[1].b).equal('longersomestring');
+        should(r.data[1].c).equal(2);
+        should(r.data[2].id).equal(5);
+        should(r.data[2].a).equal('a');
+        should(r.data[2].b).equal('longersomestring');
+        should(r.data[2].c).equal(1);
+        should(r.data[3].id).equal(4);
+        should(r.data[3].a).equal('a');
+        should(r.data[3].b).equal('longersomestring');
+        should(r.data[3].c).equal(1);
+        should(r.data[4].id).equal(3);
+        should(r.data[4].a).equal('a');
+        should(r.data[4].b).equal('longersomestring');
+        should(r.data[4].c).equal(1);
+
         done();
       });
     });
@@ -288,6 +309,14 @@ doTest() {
         response.statusCode.should.equal(200);
         const r = JSON.parse(response.payload)
         should(r.data.length).equal(2);
+        should(r.data[0].id).equal(7);
+        should(r.data[0].a).equal('longersomestring');
+        should(r.data[0].b).equal('longersomestring');
+        should(r.data[0].c).equal(2);
+        should(r.data[1].id).equal(6);
+        should(r.data[1].a).equal('somestring');
+        should(r.data[1].b).equal('longersomestring');
+        should(r.data[1].c).equal(2);
         done();
       });
     });
