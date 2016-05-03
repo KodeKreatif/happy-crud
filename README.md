@@ -2,7 +2,7 @@
 
 <img src="https://cloud.githubusercontent.com/assets/2534060/14002981/0cfda8ce-f182-11e5-888f-31d76ebae7e3.png">
 ---
-Happy CRUD is a Hapi crud abstraction.
+Happy CRUD is a Hapi crud abstraction. There are some ES7 features used in happy-crud, you need to setup Babel ``stage-3`` for your apps.
 
 ## Example
 Consider the following code:
@@ -32,6 +32,40 @@ const options = {
   authentications : {
     list : false
   }
+
+  // Example of adding before and after function on one of four routes (create, read, update, list).
+  // This useful for custom data manipulation.
+
+  /**
+   * The before function should be a promise with 2 parameters :
+   *    - request : Hapi's request
+   *    - reply : Hapi's reply
+   */
+  beforeFunc : {
+    list : function(request, reply) {
+      return new Promise((resolve, reject) => {
+        // Do something before Happy-Crud query. Ex : manipulate payload.
+        resolve();
+      })
+    }
+  }
+
+  /**
+   * The after function should be a promise with 3 parameters :
+   *    - request : Hapi's request
+   *    - reply : Hapi's reply
+   *    - result : The result object of Hapy-Crud query. You could manipulate this result before pass it to reply();
+   */
+  afterFunc : {
+    list : function(request, reply, result) {
+      return new Promise((resolve, reject) => {
+        // Do something after Happy-Crud query. Ex : add something to result.
+        result.someKey = 'someString';
+        resolve();
+      })
+    }
+  }
+
 }
 
 const db = this.setupDb();

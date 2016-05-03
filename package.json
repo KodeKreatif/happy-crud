@@ -1,14 +1,19 @@
 {
   "name": "happy-crud",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Happy Crud",
   "main": "index.js",
   "scripts": {
-    "test": "./node_modules/.bin/mocha tests"
+    "test": "babel-node --presets stage-3 ./node_modules/.bin/_mocha tests"
   },
   "author": "Mohammad Anwari <mdamt@mdamt.net> (http://aksi.mdamt.net/)",
   "license": "MIT",
   "devDependencies": {
+    "babel": "^6.5.2",
+    "babel-cli": "^6.8.0",
+    "babel-core": "^6.8.0",
+    "babel-polyfill": "^6.8.0",
+    "babel-preset-stage-3": "^6.5.0",
     "mocha": "^2.4.5",
     "mongoose": "^4.4.4",
     "should": "^8.2.2",
@@ -17,5 +22,8 @@
   "dependencies": {
     "hapi": "^13.0.0",
     "pluralize": "^1.2.1"
-  }
+  },
+  "presets": [
+    "stage-3"
+  ]
 }

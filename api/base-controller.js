@@ -21,40 +21,58 @@ constructor(model) {
 
 create(request, reply) {
   const self = this;
-  const data = request.payload;
 
-  self.model.create(data).then((result) => {
-    reply(result);
-  }).catch((err) => {
-    log('Controller::create', err);
-    reply(err).statusCode(500);
-  });
+  async function req() {
+    try {
+      let res = await request.beforeFunc.create(request, reply);
+      const data = request.payload;
+      res = await self.model.create(data);
+      res = await request.afterFunc.create(request, reply, res) || res;
+      reply(res);
+    } catch (err) {
+      console.log(err);
+      reply({message: err.message}).statusCode(500);
+    }
+  }
+  req();
 }
 
 read(request, reply) {
   const self = this;
-  const key = request.params.key;
-  const fields = request.params.fields;
 
-  self.model.read(key, fields).then((result) => {
-    reply(result);
-  }).catch((err) => {
-    log('Controller::read', err);
-    reply(err).statusCode(500);
-  });
+  async function req() {
+    try {
+      let res = await request.beforeFunc.read(request, reply);
+      const key = request.params.key;
+      const fields = request.params.fields;
+      res = await self.model.read(key, fields);
+      res = await request.afterFunc.read(request, reply, res) || res;
+      reply(res);
+    } catch (err) {
+      console.log(err);
+      reply({message: err.message}).statusCode(500);
+    }
+  }
+  req();
 }
 
 update(request, reply) {
   const self = this;
-  const key = request.params.key;
-  const data = request.payload;
 
-  self.model.update(key, data).then((result) => {
-    reply(result);
-  }).catch((err) => {
-    log('Controller::update', err);
-    reply(err).statusCode(500);
-  });
+  async function req() {
+    try {
+      let res = await request.beforeFunc.update(request, reply);
+      const key = request.params.key;
+      const data = request.payload;
+      res = await self.model.update(key, data);
+      res = await request.afterFunc.update(request, reply, res) || res;
+      reply(res);
+    } catch (err) {
+      console.log(err);
+      reply({message: err.message}).statusCode(500);
+    }
+  }
+  req();
 }
 
 delete(request, reply) {
@@ -62,28 +80,38 @@ delete(request, reply) {
   if (typeof request.payload === 'string') {
     request.payload = JSON.parse(request.payload);
   }
-  const key = request.payload.key;
-  self.model.delete(key).then((result) => {
-    reply(result);
-  }).catch((err) => {
-    log('Controller::delete', err);
-    reply(err).statusCode(500);
-  });
+
+  async function req() {
+    try {
+      let res = await request.beforeFunc.delete(request, reply);
+      const key = request.payload.key;
+      res = await self.model.delete(key);
+      res = await request.afterFunc.delete(request, reply, res) || res;
+      reply(res);
+    } catch (err) {
+      console.log(err);
+      reply({message: err.message}).statusCode(500);
+    }
+  }
+  req();
 }
 
 list(request, reply) {
   const self = this;
-  const args = request.query;
-
-  self.model.list(args).then((result) => {
-    reply(result);
-  }).catch((err) => {
-    log('Controller::list', err);
-    reply(err).statusCode(500);
-  });
+  async function req() {
+    try {
+      let res = await request.beforeFunc.list(request, reply);
+      const args = request.query;
+      res = await self.model.list(args);
+      res = await request.afterFunc.list(request, reply, res) || res;
+      reply(res);
+    } catch (err) {
+      console.log(err);
+      reply({message: err.message}).statusCode(500);
+    }
+  }
+  req();
 }
-
-
 
 validation() {
   return {

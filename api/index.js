@@ -64,6 +64,87 @@ install(options) {
     options.authentications = {};
   }
 
+  // # beforeFunc
+  if (!options.beforeFunc) {
+    options.beforeFunc = {};
+  }
+  if (!options.beforeFunc.create) {
+    options.beforeFunc.create = function(request, reply) {
+      return new Promise((resolve, reject) => {
+        resolve();
+      })
+    }
+  }
+  if (!options.beforeFunc.read) {
+    options.beforeFunc.read = function(request, reply) {
+      return new Promise((resolve, reject) => {
+        resolve();
+      })
+    }
+  }
+  if (!options.beforeFunc.update) {
+    options.beforeFunc.update = function(request, reply) {
+      return new Promise((resolve, reject) => {
+        resolve();
+      })
+    }
+  }
+  if (!options.beforeFunc.delete) {
+    options.beforeFunc.delete = function(request, reply) {
+      return new Promise((resolve, reject) => {
+        resolve();
+      })
+    }
+  }
+  if (!options.beforeFunc.list) {
+    options.beforeFunc.list = function(request, reply) {
+      return new Promise((resolve, reject) => {
+        resolve();
+      })
+    }
+  }
+  
+  // # afterFunc
+  if (!options.afterFunc) {
+    options.afterFunc = {};
+  }
+  console.log(options);
+  if (!options.afterFunc.create) {
+    options.afterFunc.create = function(request, reply, result) {
+      return new Promise((resolve, reject) => {
+        resolve()
+      })
+    }
+  }
+  if (!options.afterFunc.read) {
+    options.afterFunc.read = function(request, reply, result) {
+      return new Promise((resolve, reject) => {
+        resolve()
+      })
+    }
+  }
+  if (!options.afterFunc.update) {
+    options.afterFunc.update = function(request, reply, result) {
+      return new Promise((resolve, reject) => {
+        resolve()
+      })
+    }
+  }
+  if (!options.afterFunc.delete) {
+    options.afterFunc.delete = function(request, reply, result) {
+      return new Promise((resolve, reject) => {
+        resolve()
+      })
+    }
+  }
+  if (!options.afterFunc.list) {
+    options.afterFunc.list = function(request, reply, result) {
+      return new Promise((resolve, reject) => {
+        resolve()
+      })
+    }
+  }
+  
   self.installCreate(options);
   self.installRead(options);
   self.installUpdate(options);
@@ -78,6 +159,8 @@ installCreate(options) {
     method: 'POST',
     path: `${options.path}/${options.word[1]}`,
     handler: function handleCreate(request, reply) {
+      request.beforeFunc = options.beforeFunc;
+      request.afterFunc = options.afterFunc;
       return self.controller.create(request, reply);
     },
     config: {
@@ -98,6 +181,8 @@ installRead(options) {
     method: 'GET',
     path: `${options.path}/${options.word[0]}/{key}`,
     handler: function handleRead(request, reply) {
+      request.beforeFunc = options.beforeFunc;
+      request.afterFunc = options.afterFunc;
       return self.controller.read(request, reply);
     },
     config: {
@@ -118,6 +203,8 @@ installUpdate(options) {
     method: 'PUT',
     path: `${options.path}/${options.word[0]}/{key}`,
     handler: function handleUpdate(request, reply) {
+      request.beforeFunc = options.beforeFunc;
+      request.afterFunc = options.afterFunc;
       return self.controller.update(request, reply);
     },
     config: {
@@ -138,6 +225,8 @@ installDelete(options) {
     method: 'DELETE',
     path: `${options.path}/${options.word[1]}`,
     handler: function handleDelete(request, reply) {
+      request.beforeFunc = options.beforeFunc;
+      request.afterFunc = options.afterFunc;
       return self.controller.delete(request, reply);
     },
     config: {
@@ -158,6 +247,8 @@ installList(options) {
     method: 'GET',
     path: `${options.path}/${options.word[1]}`,
     handler: function handleList(request, reply) {
+      request.beforeFunc = options.beforeFunc;
+      request.afterFunc = options.afterFunc;
       return self.controller.list(request, reply);
     },
     config: {

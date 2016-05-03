@@ -36,6 +36,80 @@ constructor(server) {
     word: 'user',
     path: '/api',
     mount: '/',
+    beforeFunc : {
+      create : function(request, reply) {
+        return new Promise((resolve, reject) => {
+          if (request.query.c) {
+            request.payload.c = request.query.c;
+          }
+          resolve()
+        })
+      },
+      update : function(request, reply) {
+        return new Promise((resolve, reject) => {
+          if (request.query.c) {
+            request.payload.c = request.query.c;
+          }
+          resolve()
+        })
+      },
+      read : function(request, reply) {
+        return new Promise((resolve, reject) => {
+          if (request.query.key) {
+            request.params.key = request.query.key;
+          }
+          resolve()
+        })
+      },
+      delete : function(request, reply) {
+        return new Promise((resolve, reject) => {
+          if (request.query.key) {
+            request.payload.key = request.query.key;
+          }
+          resolve()
+        })
+      },
+      list : function(request, reply) {
+        return new Promise((resolve, reject) => {
+          if (request.query.realPage) {
+            request.query.page = request.query.realPage;
+          }
+          resolve()
+        })
+      }
+    },
+    afterFunc : {
+      create : function(request, reply, result) {
+        return new Promise((resolve, reject) => {
+          result.someKey = 'someString';
+          resolve()
+        })
+      },
+      update : function(request, reply, result) {
+        return new Promise((resolve, reject) => {
+          result.someKey = 'someString';
+          resolve()
+        })
+      },
+      read : function(request, reply, result) {
+        return new Promise((resolve, reject) => {
+          result.someKey = 'someString';
+          resolve()
+        })
+      },
+      delete : function(request, reply, result) {
+        return new Promise((resolve, reject) => {
+          result.someKey = 'someString';
+          resolve()
+        })
+      },
+      list : function(request, reply, result) {
+        return new Promise((resolve, reject) => {
+          result.someKey = 'someString';
+          resolve()
+        })
+      },
+    }
   }
 
   const db = this.setupDb();
@@ -321,6 +395,125 @@ doTest() {
       });
     });
   }); // describe Basic delete
+  
+  describe('Before and After function', ()=> {
+    it('should be able to create a record that carried manipulated data from before and after function', (done)=> {
+      const request = self.createPostRequest({
+        // Manipulate c value
+        url: 'http://localhost:3030/api/users?c=9',
+        payload: {
+          a:'a', b: 'b', c: 1
+        }
+      });
+      self.server.inject(request, (response) => {
+        response.statusCode.should.equal(200);
+        const r = JSON.parse(response.payload);
+        // This someKey has been added on after function
+        r.someKey.should.equal('someString');
+        r.lastId.should.equal(8);
+        const key = r.lastId;
+        const request = self.createGetRequest({
+          url: `http://localhost:3030/api/user/${key}`,
+        });
+        self.server.inject(request, (response) => {
+          response.statusCode.should.equal(200);
+          const r = JSON.parse(response.payload);
+          r.id.should.equal(8);
+          r.a.should.equal('a');
+          r.b.should.equal('b');
+          // This c value has been manipulated to 9
+          r.c.should.equal(9);
+          done();
+        });
+      });
+    });
+    it('should be able to update a record that carried manipulated data from before and after function', (done)=> {
+      const key = 8;
+      const request = self.createPutRequest({
+        url: `http://localhost:3030/api/user/${key}?c=10`,
+        payload: {
+          b: 'b1',
+          c: 2
+        }
+      });
+      self.server.inject(request, (response) => {
+        response.statusCode.should.equal(200);
+        const r = JSON.parse(response.payload);
+        // This someKey has been added on after function
+        r.someKey.should.equal('someString');
+        const request = self.createGetRequest({
+          url: `http://localhost:3030/api/user/${key}`,
+        });
+        self.server.inject(request, (response) => {
+          response.statusCode.should.equal(200);
+          const r = JSON.parse(response.payload);
+          r.id.should.equal(8);
+          r.b.should.equal('b1');
+          // This c value has been manipulated to 10
+          r.c.should.equal(10);
+          r.someKey.should.equal('someString');
+          done();
+        });
+      });
+    });
+    it('should be able to read a record that carried manipulated data from before and after function', (done)=> {
+      const key = 1;
+      const request = self.createGetRequest({
+        url: `http://localhost:3030/api/user/${key}?key=8`,
+      });
+      self.server.inject(request, (response) => {
+        response.statusCode.should.equal(200);
+        const r = JSON.parse(response.payload);
+        r.id.should.equal(8);
+        r.b.should.equal('b1');
+        r.c.should.equal(10);
+        r.someKey.should.equal('someString');
+        done();
+      });
+    });
+    it('should be able to delete a record that carried manipulated data from before function', (done)=> {
+
+      const request = self.createDeleteRequest({
+        url: `http://localhost:3030/api/users?key=8`,
+        payload: {
+          key: 2
+        }
+      });
+      self.server.inject(request, (response) => {
+        response.statusCode.should.equal(200);
+        const r = JSON.parse(response.payload);
+        r.changes.should.equal(1);
+        r.someKey.should.equal('someString');
+        const key = 8;
+        const request = self.createGetRequest({
+          url: `http://localhost:3030/api/user/${key}`,
+        });
+        self.server.inject(request, (response) => {
+          response.statusCode.should.equal(200);
+          const r = JSON.parse(response.payload);
+          r.message.should.equal('Not found');
+          done();
+        });
+      });
+    });
+    it('should be able to list records that carried manipulated data from before function', (done)=> {
+      const request = self.createGetRequest({
+        url: `http://localhost:3030/api/users?page=1&limit=2&realPage=2`,
+      });
+      self.server.inject(request, (response) => {
+        response.statusCode.should.equal(200);
+        const r = JSON.parse(response.payload);
+        r.someKey.should.equal('someString');
+        should(r.totalPages).equal(3);
+        should(r.totalCount).equal(6);
+        should(r.page).equal(2);
+        should(r.limit).equal(2);
+        should(r.data.length).equal(2);
+        done();
+      });
+
+    });
+  }); // describe Before and After function
 }
 
 
