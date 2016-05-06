@@ -154,7 +154,7 @@ sqliteDelete(key) {
 sqliteList(params) {
   const self = this;
   return new Promise((resolve, reject) => {
-    const fields = '*';
+    let fields = '*';
     if (params && Array.isArray(params.fields)) {
       fields = params.fields.join(',');
     }
