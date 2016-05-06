@@ -35,11 +35,16 @@ sqliteCreate(data) {
         marks.push('?');
       }
     }
+    
+    if (fields.length < 1) {
+      return reject(new Error('Payload should not be empty'));
+    }
+
     let sql = `insert into ${self.table} `;
         sql += '(' + fields.join(',') + ')';
         sql += ' values ';
         sql += '(' + marks.join(',') + ')';
-
+    
     self.db.run(sql, values, function(err, result) {
       if (err) {
         console.log(err);
