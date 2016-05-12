@@ -94,24 +94,87 @@ mongoList(params) {
   const self = this;
   let page = parseInt(params.page || 1);
   let limit = parseInt(params.limit || 10);
+  delete(params.page);
+  delete(params.limit);
   let skip = (page - 1) * limit;
   let args = {};
-  if (params.filterKey && params.filterValue) {
-    if (!args['$or']) {
-      args['$or'] = [];
+
+  // Reserved words
+  let reserved = [
+    'gt',      // gt(), greater than
+    'gte',     // gte(), greater than or equal
+    'lt',      // lt(), less than
+    'lte',     // lte(), less than or equal
+    'search',  // search(), search
+  ]
+
+  // Parse reserved word
+  let paramsKey = Object.keys(params);
+  for (var i in paramsKey) {
+
+    if ((params[paramsKey[i]].indexOf('(') > -1 && reserved.indexOf(params[paramsKey[i]].split('(')[0]) > -1 || Array.isArray(params[paramsKey[i]]))) {
+
+      if (!args['$and']) {
+        args['$and'] = [];
+      }
+      let reservedParams = [];
+      if (Array.isArray(params[paramsKey[i]])) {
+        for (var j in params[paramsKey[i]]) {
+          let val = params[paramsKey[i]][j].split('(')[1].slice(0,-1);
+          reservedParams.push({
+            key : params[paramsKey[i]][j].split('(')[0],
+            val : val,
+          })   
+        }
+      } else {
+        let val = params[paramsKey[i]].split('(')[1].slice(0,-1);
+        reservedParams= [{
+          key : params[paramsKey[i]].split('(')[0],
+          val : val,
+        }];
+      }
+      for (var k in reservedParams) {
+        if (reservedParams[k].key === 'search') {
+          args['$and'].push({});
+          let index = args['$and'].length - 1;
+          let regex = new RegExp(reservedParams[k].val, 'i');
+          args['$and'][index][paramsKey[i]] = regex;
+        }
+  
+        if (reservedParams[k].key === 'gt') {
+          args['$and'].push({});
+          let index = args['$and'].length - 1;
+          args['$and'][index][paramsKey[i]] = { '$gt' : reservedParams[k].val };
+        }
+        
+        if (reservedParams[k].key === 'gte') {
+          args['$and'].push({});
+          let index = args['$and'].length - 1;
+          args['$and'][index][paramsKey[i]] = { '$gte' : reservedParams[k].val };
+        }
+        
+        if (reservedParams[k].key === 'lt') {
+          args['$and'].push({});
+          let index = args['$and'].length - 1;
+          args['$and'][index][paramsKey[i]] = { '$lt' : reservedParams[k].val };
+        }
+        
+        if (reservedParams[k].key === 'lte') {
+          args['$and'].push({});
+          let index = args['$and'].length - 1;
+          args['$and'][index][paramsKey[i]] = { '$lte' : reservedParams[k].val };
+        }
+      }
+    } else {
+      args[paramsKey[i]] = params[paramsKey[i]];
     }
-    args['$or'].push({});
-    args['$or'][0][params.filterKey] = params.filterValue;
   }
-  if (params.searchKey && params.searchValue) {
-    if (!args['$or']) {
-      args['$or'] = [];
-    }
-    args['$or'].push({});
-    let index = args['$or'].length - 1;
-    let regex = new RegExp(params.searchValue, 'i');
-    args['$or'][index][params.searchKey] = regex;
+
+  // Clear empty array
+  if (args['$and'] && args['$and'].length < 1) {
+    delete(args['$and']);
   }
+
   return new Promise((resolve, reject) => {
     self.model().count(args, (err, count) => {
       if (err) {
