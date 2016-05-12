@@ -24,6 +24,7 @@ constructor(server) {
     b: String,
     c: Number,
     d: {},
+    e: Date,
   }
 
   const options = {
@@ -144,25 +145,25 @@ doTest() {
           const postRequest = self.createPostRequest({
             url: 'http://localhost:3030/api/mongos',
             payload: {
-              a:'a', b: 'b', c: 1
+              a:'a', b: 'b', c: 1, e : (new Date('2016/01/01')).toISOString()
             }
           });
           const postRequest2 = self.createPostRequest({
             url: 'http://localhost:3030/api/mongos',
             payload: {
-              a:'somestring1', b: 'longersomestring', c: 2
+              a:'somestring1', b: 'longersomestring', c: 2, e : (new Date('2016/01/02')).toISOString()
             }
           });
           const postRequest3 = self.createPostRequest({
             url: 'http://localhost:3030/api/mongos',
             payload: {
-              a:'longersomestring', b: 'uniquestring', c: 2
+              a:'longersomestring', b: 'uniquestring', c: 3, e : (new Date('2016/01/03')).toISOString()
             }
           });
           const postRequest4 = self.createPostRequest({
             url: 'http://localhost:3030/api/mongos',
             payload: {
-              a:'longersomestring', b: 'longersomestring', c: 2, d: { deep : 'object'}
+              a:'longersomestring', b: 'longersomestring', c: 4, d: { deep : 'object'}
             }
           });
           self.server.inject(postRequest, (response) => {
@@ -203,7 +204,7 @@ doTest() {
     });
     it('should be able to list records with filter', (done)=> {
       const request = self.createGetRequest({
-        url: `http://localhost:3030/api/mongos?filterKey=a&filterValue=somestring1`,
+        url: `http://localhost:3030/api/mongos?a=somestring1`,
       });
       self.server.inject(request, (response) => {
         response.statusCode.should.equal(200);
@@ -215,7 +216,7 @@ doTest() {
     });
     it('should be able to list records with wrong filterKey, return nothing', (done)=> {
       const request = self.createGetRequest({
-        url: `http://localhost:3030/api/mongos?filterKey=abc&filterValue=somestring`,
+        url: `http://localhost:3030/api/mongos?abc=somestring`,
       });
       self.server.inject(request, (response) => {
         response.statusCode.should.equal(200);
@@ -226,7 +227,7 @@ doTest() {
     });
     it('should be able to list records with wrong filterValue, return nothing', (done)=> {
       const request = self.createGetRequest({
-        url: `http://localhost:3030/api/mongos?filterKey=a&filterValue=somestringthatdoesntexist`,
+        url: `http://localhost:3030/api/mongos?a=somestringthatdoesntexist`,
       });
       self.server.inject(request, (response) => {
         response.statusCode.should.equal(200);
@@ -237,7 +238,7 @@ doTest() {
     });
     it('should be able to list records with search', (done)=> {
       const request = self.createGetRequest({
-        url: `http://localhost:3030/api/mongos?searchKey=a&searchValue=mestr`,
+        url: `http://localhost:3030/api/mongos?a=search(mestr)`,
       });
       self.server.inject(request, (response) => {
         response.statusCode.should.equal(200);
@@ -251,7 +252,7 @@ doTest() {
     });
     it('should be able to list records with wrong searchKey, return nothing', (done)=> {
       const request = self.createGetRequest({
-        url: `http://localhost:3030/api/mongos?searchKey=abc&searchValue=somestring`,
+        url: `http://localhost:3030/api/mongos?abc=search(somestring)`,
       });
       self.server.inject(request, (response) => {
         response.statusCode.should.equal(200);
@@ -262,7 +263,7 @@ doTest() {
     });
     it('should be able to list records with wrong searchValue, return nothing', (done)=> {
       const request = self.createGetRequest({
-        url: `http://localhost:3030/api/mongos?searchKey=a&searchValue=somestringthatdoesntexist`,
+        url: `http://localhost:3030/api/mongos?a=search(somestringthatdoesntexist)`,
       });
       self.server.inject(request, (response) => {
         response.statusCode.should.equal(200);
@@ -273,18 +274,120 @@ doTest() {
     });
     it('should be able to list records with combined search and filter', (done)=> {
       const request = self.createGetRequest({
-        url: `http://localhost:3030/api/mongos?filterKey=a&filterValue=somestring1&searchKey=b&searchValue=uniquestring`,
+        url: `http://localhost:3030/api/mongos?a=somestring1&b=search(estring)`,
+      });
+      self.server.inject(request, (response) => {
+        response.statusCode.should.equal(200);
+        const r = JSON.parse(response.payload);
+        should(r.data.length).equal(1);
+        should(r.data[0].a).equal('somestring1');
+        /* should(r.data[1].b).equal('uniquestring'); */
+        done();
+      });
+    });
+
+    // Query using reserved key : gt, gte, lt, lte
+    it('should be able to list records with search()', (done)=> {
+      const request = self.createGetRequest({
+        url: `http://localhost:3030/api/mongos?a=search(mestr)`,
+      });
+      self.server.inject(request, (response) => {
+        response.statusCode.should.equal(200);
+        const r = JSON.parse(response.payload);
+        should(r.data.length).equal(3);
+        should(r.data[0].a.indexOf('mestr')).greaterThan(-1);
+        should(r.data[1].a.indexOf('mestr')).greaterThan(-1);
+        should(r.data[2].a.indexOf('mestr')).greaterThan(-1);
+        done();
+      });
+    });
+    it('should be able to list records with gt()', (done)=> {
+      const request = self.createGetRequest({
+        url: `http://localhost:3030/api/mongos?c=gt(2)`,
       });
       self.server.inject(request, (response) => {
         response.statusCode.should.equal(200);
         const r = JSON.parse(response.payload);
         should(r.data.length).equal(2);
-        should(r.data[0].a).equal('somestring1');
-        should(r.data[1].b).equal('uniquestring');
+        should(r.data[0].c).greaterThan(2);
+        should(r.data[1].c).greaterThan(2);
         done();
       });
     });
-  }); // describe Basic delete
+    it('should be able to list records with gte()', (done)=> {
+      const request = self.createGetRequest({
+        url: `http://localhost:3030/api/mongos?c=gte(2)`,
+      });
+      self.server.inject(request, (response) => {
+        response.statusCode.should.equal(200);
+        const r = JSON.parse(response.payload);
+        should(r.data.length).equal(3);
+        should(r.data[0].c).greaterThanOrEqual(2);
+        should(r.data[1].c).greaterThanOrEqual(2);
+        should(r.data[2].c).greaterThanOrEqual(2);
+        done();
+      });
+    });
+    it('should be able to list records with lt()', (done)=> {
+      const request = self.createGetRequest({
+        url: `http://localhost:3030/api/mongos?c=lt(2)`,
+      });
+      self.server.inject(request, (response) => {
+        response.statusCode.should.equal(200);
+        const r = JSON.parse(response.payload);
+        should(r.data.length).equal(4);
+        should(r.data[0].c).lessThan(2);
+        should(r.data[1].c).lessThan(2);
+        should(r.data[2].c).lessThan(2);
+        should(r.data[3].c).lessThan(2);
+        done();
+      });
+    });
+    it('should be able to list records with lte()', (done)=> {
+      const request = self.createGetRequest({
+        url: `http://localhost:3030/api/mongos?c=lte(2)`,
+      });
+      self.server.inject(request, (response) => {
+        response.statusCode.should.equal(200);
+        const r = JSON.parse(response.payload);
+        should(r.data.length).equal(5);
+        should(r.data[0].c).lessThanOrEqual(2);
+        should(r.data[1].c).lessThanOrEqual(2);
+        should(r.data[2].c).lessThanOrEqual(2);
+        should(r.data[3].c).lessThanOrEqual(2);
+        should(r.data[4].c).lessThanOrEqual(2);
+        done();
+      });
+    });
+    it('should be able to list records with lt() and gt()', (done)=> {
+      const request = self.createGetRequest({
+        url: `http://localhost:3030/api/mongos?c=lt(3)&c=gt(1)`,
+      });
+      self.server.inject(request, (response) => {
+        response.statusCode.should.equal(200);
+        const r = JSON.parse(response.payload);
+        should(r.data.length).equal(1);
+        should(r.data[0].c).lessThanOrEqual(3);
+        should(r.data[0].c).greaterThanOrEqual(1);
+        done();
+      });
+    });
+    it('should be able to list records with lt() and gt() by date value', (done)=> {
+      let start = (new Date('2016/01/01')).toISOString();
+      let end = (new Date('2016/01/03')).toISOString();
+      const request = self.createGetRequest({
+        url: 'http://localhost:3030/api/mongos?e=gt(' + start + ')&e=lt(' + end + ')',
+      });
+      self.server.inject(request, (response) => {
+        response.statusCode.should.equal(200);
+        const r = JSON.parse(response.payload);
+        should(r.data.length).equal(1);
+        should((new Date(r.data[0].e)).valueOf()).greaterThan((new Date(start)).valueOf());
+        should((new Date(r.data[0].e)).valueOf()).lessThan((new Date(end)).valueOf());
+        done();
+      });
+    });
+  }); // describe Basic list
 }
 
 } // class TestMongo
