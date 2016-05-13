@@ -164,10 +164,15 @@ sqliteList(params) {
   let sort = params.sort || 'desc'
   let skip = (page - 1) * limit;
   let args =  ` order by ${sortBy} ${sort} limit ${skip},${limit}`;
+  let operator = 'and';
+  if (params.operator) {
+    operator = params.operator;
+  }
   delete(params.page);
   delete(params.limit);
   delete(params.sort);
   delete(params.sortBy);
+  delete(params.operator);
 
   let fields = '*';
   if (params && Array.isArray(params.fields)) {
@@ -189,87 +194,105 @@ sqliteList(params) {
   // Parse reserved word
   let paramsKey = Object.keys(params);
   for (var i in paramsKey) {
-
-    if ((params[paramsKey[i]].indexOf('(') > -1 && reserved.indexOf(params[paramsKey[i]].split('(')[0]) > -1 || Array.isArray(params[paramsKey[i]]))) {
-      if (!filterArgs.indexOf('where') > -1) {
-        filterArgs += ' where'
+    
+    // Check for invalid fields
+    let validFields = true;
+    let f = paramsKey[i].split(',');
+    for (var x in f) {
+      if (schema.indexOf(f[x]) < 0) {
+        validFields = false;
       }
-      let reservedParams = [];
-      if (Array.isArray(params[paramsKey[i]])) {
-        for (var j in params[paramsKey[i]]) {
-          if (params[paramsKey[i]][j].split('(')[1]) {
-            let val = params[paramsKey[i]][j].split('(')[1].slice(0,-1);
-            // ISO Date string example 2016-05-13T02:06:43.986Z
-            if (val.length == 24 && val[4] === '-' && val[7] === '-' && val[13] === ':' && val[16] === ':' && val[23] === 'Z') {
-              val = '\'' + val + '\'';
+    }
+    if (validFields) {
+      if ((params[paramsKey[i]].indexOf('(') > -1 && reserved.indexOf(params[paramsKey[i]].split('(')[0]) > -1 || Array.isArray(params[paramsKey[i]]))) {
+        if (filterArgs.indexOf('where') < 0) {
+          filterArgs += ' where'
+        }
+        let reservedParams = [];
+        if (Array.isArray(params[paramsKey[i]])) {
+          for (var j in params[paramsKey[i]]) {
+            if (params[paramsKey[i]][j].split('(')[1]) {
+              let val = params[paramsKey[i]][j].split('(')[1].slice(0,-1);
+              // ISO Date string example 2016-05-13T02:06:43.986Z
+              if (val.length == 24 && val[4] === '-' && val[7] === '-' && val[13] === ':' && val[16] === ':' && val[23] === 'Z') {
+                val = '\'' + val + '\'';
+              }
+              reservedParams.push({
+                key : params[paramsKey[i]][j].split('(')[0],
+                val : val,
+              })   
             }
-            reservedParams.push({
-              key : params[paramsKey[i]][j].split('(')[0],
-              val : val,
-            })   
+          }
+        } else {
+          let val = params[paramsKey[i]].split('(')[1].slice(0,-1);
+          // ISO Date string example 2016-05-13T02:06:43.986Z
+          if (val.length == 24 && val[4] === '-' && val[7] === '-' && val[13] === ':' && val[16] === ':' && val[23] === 'Z') {
+            val = '\'' + val + '\'';
+          }
+          reservedParams= [{
+            key : params[paramsKey[i]].split('(')[0],
+            val : val,
+          }];
+        }
+        
+        for (var k in reservedParams) {
+          if (reservedParams[k].key === 'search') {
+            if (filterArgs.length > 6) {
+              filterArgs += ` ${operator}`;
+            }
+            // Allows search on multiple fields
+            let f = paramsKey[i].split(',');
+            let searchArgs = '(';
+            for (var i in f) {
+              if (searchArgs.length > 1) {
+                searchArgs += ' or';
+              }
+              searchArgs += ` ${f[i]} like '%${reservedParams[k].val}%'`;
+            }
+            searchArgs += ')';
+            filterArgs += ` ${searchArgs}`;
+          }
+    
+          if (reservedParams[k].key === 'gt') {
+            if (filterArgs.length > 6) {
+              filterArgs += ` ${operator}`;
+            }
+            filterArgs += ` ${paramsKey[i]} > ${reservedParams[k].val}`;
+          }
+          
+          if (reservedParams[k].key === 'gte') {
+            if (filterArgs.length > 6) {
+              filterArgs += ` ${operator}`;
+            }
+            filterArgs += ` ${paramsKey[i]} >= ${reservedParams[k].val}`;
+          }
+          
+          if (reservedParams[k].key === 'lt') {
+            if (filterArgs.length > 6) {
+              filterArgs += ` ${operator}`;
+            }
+            filterArgs += ` ${paramsKey[i]} < ${reservedParams[k].val}`;
+          }
+          
+          if (reservedParams[k].key === 'lte') {
+            if (filterArgs.length > 6) {
+              filterArgs += ` ${operator}`;
+            }
+            filterArgs += ` ${paramsKey[i]} <= ${reservedParams[k].val}`;
           }
         }
       } else {
-        let val = params[paramsKey[i]].split('(')[1].slice(0,-1);
-        // ISO Date string example 2016-05-13T02:06:43.986Z
-        if (val.length == 24 && val[4] === '-' && val[7] === '-' && val[13] === ':' && val[16] === ':' && val[23] === 'Z') {
-          val = '\'' + val + '\'';
-        }
-        reservedParams= [{
-          key : params[paramsKey[i]].split('(')[0],
-          val : val,
-        }];
-      }
-      
-      for (var k in reservedParams) {
-        if (reservedParams[k].key === 'search') {
-          if (filterArgs.length > 6) {
-            filterArgs += ' and';
-          }
-          filterArgs += ` ${paramsKey[i]} like '%${reservedParams[k].val}%'`;
-        }
-  
-        if (reservedParams[k].key === 'gt') {
-          if (filterArgs.length > 6) {
-            filterArgs += ' and';
-          }
-          filterArgs += ` ${paramsKey[i]} > ${reservedParams[k].val}`;
-        }
-        
-        if (reservedParams[k].key === 'gte') {
-          if (filterArgs.length > 6) {
-            filterArgs += ' and';
-          }
-          filterArgs += ` ${paramsKey[i]} >= ${reservedParams[k].val}`;
-        }
-        
-        if (reservedParams[k].key === 'lt') {
-          if (filterArgs.length > 6) {
-            filterArgs += ' and';
-          }
-          filterArgs += ` ${paramsKey[i]} < ${reservedParams[k].val}`;
-        }
-        
-        if (reservedParams[k].key === 'lte') {
-          if (filterArgs.length > 6) {
-            filterArgs += ' and';
-          }
-          filterArgs += ` ${paramsKey[i]} <= ${reservedParams[k].val}`;
-        }
-      }
-    } else {
-      if (schema.indexOf(paramsKey[i]) > -1) {
         if (filterArgs.indexOf('where') < 0) {
           filterArgs += ' where'
         }
         if (filterArgs.length > 6) {
-          filterArgs += ' and';
+          filterArgs += ` ${operator}`;
         }
         filterArgs += ` ${paramsKey[i]} = '${params[paramsKey[i]]}'`;
       }
     }
   }
-  
+
   return new Promise((resolve, reject) => {
     let sqlCount = `select count(1) from ${self.table} ${filterArgs}`;
     self.db.get(sqlCount, [], function(err, count) {
@@ -278,16 +301,16 @@ sqliteList(params) {
         reject(err);
         return;
       }
+      let totalPages = count['count(1)'] % limit ? parseInt(count['count(1)'] / limit) + 1 : count['count(1)'] / limit;
+      if (totalPages < 1) {
+        totalPages = 1;
+      }
       let sqlAll = `select ${fields} from ${self.table} ${filterArgs} ${args}`;
       self.db.all(sqlAll, [], function(err, results) {
         if (err) {
           console.log(err);
           reject(err);
           return;
-        }
-        let totalPages = count['count(1)'] % limit ? parseInt(count['count(1)'] / limit) + 1 : count['count(1)'] / limit;
-        if (totalPages < 1) {
-          totalPages = 1;
         }
         resolve({
           data: results,
