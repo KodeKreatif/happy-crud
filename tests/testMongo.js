@@ -286,7 +286,7 @@ doTest() {
       });
     });
 
-    // Query using reserved key : gt, gte, lt, lte
+    // Query using reserved words
     it('should be able to list records with search()', (done)=> {
       const request = self.createGetRequest({
         url: `http://localhost:3030/api/mongos?a=search(mestr)`,
