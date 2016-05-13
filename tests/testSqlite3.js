@@ -14,7 +14,7 @@ class TestSqlite3 extends BaseTest {
 setupDb() {
   const db = new Sqlite3.Database(':memory:');
   db.serialize(function() {
-    db.run("CREATE TABLE testa (id INTEGER PRIMARY KEY AUTOINCREMENT, a TEXT, b TEXT, c INTEGER)");
+    db.run("CREATE TABLE testa (id INTEGER PRIMARY KEY AUTOINCREMENT, a TEXT, b TEXT, c INTEGER, e DATE)");
   });
   return db;
 }
@@ -30,6 +30,7 @@ constructor(server) {
     a: String,
     b: String,
     c: Number,
+    e: Date,
   }
 
   const options = {
@@ -225,19 +226,19 @@ doTest() {
         const postRequest = self.createPostRequest({
           url: 'http://localhost:3030/api/users',
           payload: {
-            a:'a', b: 'longersomestring', c: 1
+            a:'a', b: 'longersomestring', c: 1, e: (new Date('2016/01/01')).toISOString()
           }
         });
         const postRequest2 = self.createPostRequest({
           url: 'http://localhost:3030/api/users',
           payload: {
-            a:'somestring', b: 'longersomestring', c: 2
+            a:'somestring', b: 'longersomestring', c: 2, e: (new Date('2016/01/02')).toISOString()
           }
         });
         const postRequest3 = self.createPostRequest({
           url: 'http://localhost:3030/api/users',
           payload: {
-            a:'longersomestring', b: 'longersomestring', c: 2
+            a:'longersomestring', b: 'longersomestring', c: 3, e: (new Date('2016/01/03')).toISOString()
           }
         });
         self.server.inject(postRequest, (response) => {
@@ -317,7 +318,7 @@ doTest() {
     });
     it('should be able to list records with filter', (done)=> {
       const request = self.createGetRequest({
-        url: `http://localhost:3030/api/users?filterKey=a&filterValue=somestring`,
+        url: `http://localhost:3030/api/users?a=somestring`,
       });
       self.server.inject(request, (response) => {
         response.statusCode.should.equal(200);
@@ -330,7 +331,7 @@ doTest() {
     });
     it('should be able to list records with search', (done)=> {
       const request = self.createGetRequest({
-        url: `http://localhost:3030/api/users?searchKey=a&searchValue=some`,
+        url: `http://localhost:3030/api/users?a=search(some)`,
       });
       self.server.inject(request, (response) => {
         response.statusCode.should.equal(200);
@@ -345,56 +346,120 @@ doTest() {
     });
     it('should be able to list records with search within multiple keys', (done)=> {
       const request = self.createGetRequest({
-        url: `http://localhost:3030/api/users?searchKey=a,b&searchValue=longersome`,
+        url: `http://localhost:3030/api/users?a=search(longe)&b=longersomestring`,
       });
       self.server.inject(request, (response) => {
         response.statusCode.should.equal(200);
         const r = JSON.parse(response.payload)
-        should(r.data.length).equal(5);
+        should(r.data.length).equal(1);
         should(r.data[0].id).equal(7);
         should(r.data[0].a).equal('longersomestring');
         should(r.data[0].b).equal('longersomestring');
-        should(r.data[0].c).equal(2);
-        should(r.data[1].id).equal(6);
-        should(r.data[1].a).equal('somestring');
-        should(r.data[1].b).equal('longersomestring');
-        should(r.data[1].c).equal(2);
-        should(r.data[2].id).equal(5);
-        should(r.data[2].a).equal('a');
-        should(r.data[2].b).equal('longersomestring');
-        should(r.data[2].c).equal(1);
-        should(r.data[3].id).equal(4);
-        should(r.data[3].a).equal('a');
-        should(r.data[3].b).equal('longersomestring');
-        should(r.data[3].c).equal(1);
-        should(r.data[4].id).equal(3);
-        should(r.data[4].a).equal('a');
-        should(r.data[4].b).equal('longersomestring');
-        should(r.data[4].c).equal(1);
-
+        should(r.data[0].c).equal(3);
         done();
       });
     });
-    it('should be able to list records with combined search and filter', (done)=> {
+    // Query using reserved words
+    it('should be able to list records with search()', (done)=> {
       const request = self.createGetRequest({
-        url: `http://localhost:3030/api/users?searchKey=a&searchValue=longe&filterKey=a&filterValue=somestring`,
+        url: `http://localhost:3030/api/users?a=search(mestr)`,
       });
       self.server.inject(request, (response) => {
         response.statusCode.should.equal(200);
-        const r = JSON.parse(response.payload)
+        const r = JSON.parse(response.payload);
         should(r.data.length).equal(2);
-        should(r.data[0].id).equal(7);
-        should(r.data[0].a).equal('longersomestring');
-        should(r.data[0].b).equal('longersomestring');
-        should(r.data[0].c).equal(2);
-        should(r.data[1].id).equal(6);
-        should(r.data[1].a).equal('somestring');
-        should(r.data[1].b).equal('longersomestring');
-        should(r.data[1].c).equal(2);
+        should(r.data[0].a.indexOf('mestr')).greaterThan(-1);
+        should(r.data[1].a.indexOf('mestr')).greaterThan(-1);
         done();
       });
     });
-  }); // describe Basic delete
+    it('should be able to list records with gt()', (done)=> {
+      const request = self.createGetRequest({
+        url: `http://localhost:3030/api/users?c=gt(2)`,
+      });
+      self.server.inject(request, (response) => {
+        response.statusCode.should.equal(200);
+        const r = JSON.parse(response.payload);
+        should(r.data.length).equal(1);
+        should(r.data[0].c).greaterThan(2);
+        done();
+      });
+    });
+    it('should be able to list records with gte()', (done)=> {
+      const request = self.createGetRequest({
+        url: `http://localhost:3030/api/users?c=gte(2)`,
+      });
+      self.server.inject(request, (response) => {
+        response.statusCode.should.equal(200);
+        const r = JSON.parse(response.payload);
+        should(r.data.length).equal(3);
+        should(r.data[0].c).greaterThanOrEqual(2);
+        should(r.data[1].c).greaterThanOrEqual(2);
+        should(r.data[2].c).greaterThanOrEqual(2);
+        done();
+      });
+    });
+    it('should be able to list records with lt()', (done)=> {
+      const request = self.createGetRequest({
+        url: `http://localhost:3030/api/users?c=lt(2)`,
+      });
+      self.server.inject(request, (response) => {
+        response.statusCode.should.equal(200);
+        const r = JSON.parse(response.payload);
+        should(r.data.length).equal(3);
+        should(r.data[0].c).lessThan(2);
+        should(r.data[1].c).lessThan(2);
+        should(r.data[2].c).lessThan(2);
+        done();
+      });
+    });
+    it('should be able to list records with lte()', (done)=> {
+      const request = self.createGetRequest({
+        url: `http://localhost:3030/api/users?c=lte(2)`,
+      });
+      self.server.inject(request, (response) => {
+        response.statusCode.should.equal(200);
+        const r = JSON.parse(response.payload);
+        should(r.data.length).equal(5);
+        should(r.data[0].c).lessThanOrEqual(2);
+        should(r.data[1].c).lessThanOrEqual(2);
+        should(r.data[2].c).lessThanOrEqual(2);
+        should(r.data[3].c).lessThanOrEqual(2);
+        should(r.data[4].c).lessThanOrEqual(2);
+        done();
+      });
+    });
+    it('should be able to list records with lt() and gt()', (done)=> {
+      const request = self.createGetRequest({
+        url: `http://localhost:3030/api/users?c=lt(3)&c=gt(1)`,
+      });
+      self.server.inject(request, (response) => {
+        response.statusCode.should.equal(200);
+        const r = JSON.parse(response.payload);
+        should(r.data.length).equal(2);
+        should(r.data[0].c).lessThanOrEqual(3);
+        should(r.data[0].c).greaterThanOrEqual(1);
+        should(r.data[1].c).lessThanOrEqual(3);
+        should(r.data[1].c).greaterThanOrEqual(1);
+        done();
+      });
+    });
+    it('should be able to list records with lt() and gt() by date value', (done)=> {
+      let start = (new Date('2016/01/01')).toISOString();
+      let end = (new Date('2016/01/03')).toISOString();
+      const request = self.createGetRequest({
+        url: 'http://localhost:3030/api/users?e=gt(' + start + ')&e=lt(' + end + ')',
+      });
+      self.server.inject(request, (response) => {
+        response.statusCode.should.equal(200);
+        const r = JSON.parse(response.payload);
+        should(r.data.length).equal(1);
+        should((new Date(r.data[0].e)).valueOf()).greaterThan((new Date(start)).valueOf());
+        should((new Date(r.data[0].e)).valueOf()).lessThan((new Date(end)).valueOf());
+        done();
+      });
+    });
+  }); // describe Basic list
   
   describe('Before and After function', ()=> {
     it('should be able to create a record that carried manipulated data from before and after function', (done)=> {

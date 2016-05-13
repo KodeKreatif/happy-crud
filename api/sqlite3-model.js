@@ -158,43 +158,119 @@ sqliteDelete(key) {
 
 sqliteList(params) {
   const self = this;
-  return new Promise((resolve, reject) => {
-    let fields = '*';
-    if (params && Array.isArray(params.fields)) {
-      fields = params.fields.join(',');
-    }
-    let filterArgs = '';
-    if ((params.filterKey && params.filterValue) || (params.searchKey && params.searchValue)) {
-      filterArgs += 'where'
-      if (params.filterKey && params.filterValue) {
-        filterArgs += ' ' + params.filterKey + ' = \'' + params.filterValue + '\'';
+  let page = parseInt(params.page || 1);
+  let limit = parseInt(params.limit || 10);
+  let sortby = params.sortby || 'id';
+  let sort = params.sort || 'desc'
+  let skip = (page - 1) * limit;
+  let args =  ' order by ' + sortby + ' ' + sort + ' limit ' + skip + ',' + limit;
+  delete(params.page);
+  delete(params.limit);
+  delete(params.sort);
+  delete(params.sortBy);
+
+  let fields = '*';
+  if (params && Array.isArray(params.fields)) {
+    fields = params.fields.join(',');
+  }
+  let schema = Object.keys(self.schema);
+
+  let filterArgs = '';
+
+  // Reserved words
+  let reserved = [
+    'gt',      // gt(), greater than
+    'gte',     // gte(), greater than or equal
+    'lt',      // lt(), less than
+    'lte',     // lte(), less than or equal
+    'search',  // search(), search
+  ]
+
+  // Parse reserved word
+  let paramsKey = Object.keys(params);
+  for (var i in paramsKey) {
+
+    if ((params[paramsKey[i]].indexOf('(') > -1 && reserved.indexOf(params[paramsKey[i]].split('(')[0]) > -1 || Array.isArray(params[paramsKey[i]]))) {
+      if (!filterArgs.indexOf('where') > -1) {
+        filterArgs += ' where'
+      }
+      let reservedParams = [];
+      if (Array.isArray(params[paramsKey[i]])) {
+        for (var j in params[paramsKey[i]]) {
+          if (params[paramsKey[i]][j].split('(')[1]) {
+            let val = params[paramsKey[i]][j].split('(')[1].slice(0,-1);
+            // ISO Date string example 2016-05-13T02:06:43.986Z
+            if (val.length == 24 && val[4] === '-' && val[7] === '-' && val[13] === ':' && val[16] === ':' && val[23] === 'Z') {
+              val = '\'' + val + '\'';
+            }
+            reservedParams.push({
+              key : params[paramsKey[i]][j].split('(')[0],
+              val : val,
+            })   
+          }
+        }
+      } else {
+        let val = params[paramsKey[i]].split('(')[1].slice(0,-1);
+        // ISO Date string example 2016-05-13T02:06:43.986Z
+        if (val.length == 24 && val[4] === '-' && val[7] === '-' && val[13] === ':' && val[16] === ':' && val[23] === 'Z') {
+          val = '\'' + val + '\'';
+        }
+        reservedParams= [{
+          key : params[paramsKey[i]].split('(')[0],
+          val : val,
+        }];
       }
       
-      if (params.searchKey && params.searchValue) {
-        if (filterArgs != 'where') {
-          filterArgs += ' or';
-        }
-        if (params.searchKey.indexOf(',') > -1) {
-          let keys = params.searchKey.split(',');
-          filterArgs += ' ( ';
-          for (var i in keys) {
-            if (i > 0) {
-              filterArgs += ' or ';
-            }
-            filterArgs += keys[i] + ' like \'%' + params.searchValue + '%\'';
+      for (var k in reservedParams) {
+        if (reservedParams[k].key === 'search') {
+          if (filterArgs.length > 6) {
+            filterArgs += ' and';
           }
-          filterArgs += ' ) ';
-        } else {
-          filterArgs += ' ' + params.searchKey + ' like \'%' + params.searchValue + '%\'';
+          filterArgs += ' ' + paramsKey[i] + ' like \'%' + reservedParams[k].val + '%\'';
+        }
+  
+        if (reservedParams[k].key === 'gt') {
+          if (filterArgs.length > 6) {
+            filterArgs += ' and';
+          }
+          filterArgs += ' ' + paramsKey[i] + ' > ' + reservedParams[k].val;
+        }
+        
+        if (reservedParams[k].key === 'gte') {
+          if (filterArgs.length > 6) {
+            filterArgs += ' and';
+          }
+          filterArgs += ' ' + paramsKey[i] + ' >= ' + reservedParams[k].val;
+        }
+        
+        if (reservedParams[k].key === 'lt') {
+          if (filterArgs.length > 6) {
+            filterArgs += ' and';
+          }
+          filterArgs += ' ' + paramsKey[i] + ' < ' + reservedParams[k].val;
+        }
+        
+        if (reservedParams[k].key === 'lte') {
+          if (filterArgs.length > 6) {
+            filterArgs += ' and';
+          }
+          filterArgs += ' ' + paramsKey[i] + ' <= ' + reservedParams[k].val;
         }
       }
+    } else {
+      if (schema.indexOf(paramsKey[i]) > -1) {
+        if (filterArgs.indexOf('where') < 0) {
+          filterArgs += ' where'
+        }
+        if (filterArgs.length > 6) {
+          filterArgs += ' and';
+        }
+        filterArgs += ' ' + paramsKey[i] + '=\'' + params[paramsKey[i]] + '\'';
+      }
     }
-    let page = parseInt(params.page || 1);
-    let limit = parseInt(params.limit || 10);
-    let sortby = params.sortby || 'id';
-    let sort = params.sort || 'desc'
-    let skip = (page - 1) * limit;
-    let args =  ' order by ' + sortby + ' ' + sort + ' limit ' + skip + ',' + limit;
+  }
+  
+  return new Promise((resolve, reject) => {
     let sqlCount = `select count(1) from ${self.table} ${filterArgs}`;
     self.db.get(sqlCount, [], function(err, count) {
       if (err) {
