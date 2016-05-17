@@ -97,6 +97,9 @@ mongoList(params) {
   delete(params.page);
   delete(params.limit);
   let skip = (page - 1) * limit;
+  if (limit === 0) {
+    skip = 0;
+  }
   let args = {};
 
   // Reserved words

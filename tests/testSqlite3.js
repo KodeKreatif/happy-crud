@@ -5,6 +5,7 @@ const HappyCrud = require('../api');
 const BaseTest = require('./base-test');
 const should = require('should');
 const Sqlite3 = require('sqlite3');
+const async = require('async');
 
 class ControllerA extends BaseController {
 } // class ModelA
@@ -241,27 +242,30 @@ doTest() {
             a:'longersomestring', b: 'longersomestring', c: 3, e: (new Date('2016/01/03')).toISOString()
           }
         });
-        self.server.inject(postRequest, (response) => {
-          self.server.inject(postRequest, (response) => {
-            self.server.inject(postRequest, (response) => {
-              self.server.inject(postRequest2, (response) => {
-                self.server.inject(postRequest3, (response) => {
-                  const requestByPage1Limit2 = self.createGetRequest({
-                    url: `http://localhost:3030/api/users?page=1&limit=2`,
-                  });
-                  self.server.inject(requestByPage1Limit2, (response) => {
-                    response.statusCode.should.equal(200);
-                    const r = JSON.parse(response.payload);
-                    r.totalCount.should.equal(6);
-                    r.totalPages.should.equal(3);
-                    r.data.length.should.equal(2);
-                    done();
-                  });
-                });
-              });
-            });
+        let sequence = [
+          postRequest,
+          postRequest,
+          postRequest,
+          postRequest2,
+          postRequest3,
+        ];
+        async.eachSeries(sequence, (seq, cb) => {
+          self.server.inject(seq, (response) => {
+            cb();
+          })
+        }, (err) => {
+          const requestByPage1Limit2 = self.createGetRequest({
+            url: `http://localhost:3030/api/users?page=1&limit=2`,
           });
-        });
+          self.server.inject(requestByPage1Limit2, (response) => {
+            response.statusCode.should.equal(200);
+            const r = JSON.parse(response.payload);
+            r.totalCount.should.equal(6);
+            r.totalPages.should.equal(3);
+            r.data.length.should.equal(2);
+            done();
+          });
+        })
       });
     });
     it('should be able to list records by page 2', (done)=> {
@@ -459,6 +463,32 @@ doTest() {
         done();
       });
     });
+    it('should be able to list all records with limit=0', (done)=> {
+      const postRequest = self.createPostRequest({
+        url: 'http://localhost:3030/api/users',
+        payload: {
+          a:'x', b: 'y', c: 0
+        }
+      });
+      // Fill data to more than 10 item
+      // Fill data to more than 10 item
+      let sequence = [7, 8,9,10,11,12,13];
+      async.eachSeries(sequence, (seq, cb) => {
+        self.server.inject(postRequest, (response) => {
+          cb();
+        })
+      }, (err) => {
+        const request = self.createGetRequest({
+          url: `http://localhost:3030/api/users?page=1&limit=0`,
+        });
+        self.server.inject(request, (response) => {
+          response.statusCode.should.equal(200);
+          const r = JSON.parse(response.payload);
+          should(r.data.length).equal(13);
+          done();
+        });
+      })
+    });
   }); // describe Basic list
   
   describe('Before and After function', ()=> {
@@ -475,7 +505,7 @@ doTest() {
         const r = JSON.parse(response.payload);
         // This someKey has been added on after function
         r.someKey.should.equal('someString');
-        r.lastId.should.equal(8);
+        r.lastId.should.equal(15);
         const key = r.lastId;
         const request = self.createGetRequest({
           url: `http://localhost:3030/api/user/${key}`,
@@ -483,7 +513,7 @@ doTest() {
         self.server.inject(request, (response) => {
           response.statusCode.should.equal(200);
           const r = JSON.parse(response.payload);
-          r.id.should.equal(8);
+          r.id.should.equal(15);
           r.a.should.equal('a');
           r.b.should.equal('b');
           // This c value has been manipulated to 9
@@ -569,14 +599,13 @@ doTest() {
         response.statusCode.should.equal(200);
         const r = JSON.parse(response.payload);
         r.someKey.should.equal('someString');
-        should(r.totalPages).equal(3);
-        should(r.totalCount).equal(6);
+        should(r.totalPages).equal(7);
+        should(r.totalCount).equal(13);
         should(r.page).equal(2);
         should(r.limit).equal(2);
         should(r.data.length).equal(2);
         done();
       });
-
     });
   }); // describe Before and After function
 }
