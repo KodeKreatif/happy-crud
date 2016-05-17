@@ -387,6 +387,36 @@ doTest() {
         done();
       });
     });
+    it('should be able to list all records with limit=0', (done)=> {
+      const postRequest = self.createPostRequest({
+        url: 'http://localhost:3030/api/mongos',
+        payload: {
+          a:'x', b: 'y', c: 0
+        }
+      });
+      // Fill data to more than 10 item
+      self.server.inject(postRequest, (response) => {
+        self.server.inject(postRequest, (response) => {
+          self.server.inject(postRequest, (response) => {
+            self.server.inject(postRequest, (response) => {
+              self.server.inject(postRequest, (response) => {
+                self.server.inject(postRequest, (response) => {
+                  const request = self.createGetRequest({
+                    url: `http://localhost:3030/api/mongos?page=1&limit=0`,
+                  });
+                  self.server.inject(request, (response) => {
+                    response.statusCode.should.equal(200);
+                    const r = JSON.parse(response.payload);
+                    should(r.data.length).equal(13);
+                    done();
+                  });
+                })
+              })
+            })
+          })
+        })
+      })
+    });
   }); // describe Basic list
 }
 
@@ -399,3 +429,16 @@ Object.keys(events.EventEmitter.prototype).forEach((prop) => {
 events.EventEmitter.call(TestMongo);
 
 module.exports = TestMongo;
+    /* it('should be able to list all records with limit=0', (done)=> { */
+    /*   let start = (new Date('2016/01/01')).toISOString(); */
+    /*   let end = (new Date('2016/01/03')).toISOString(); */
+    /*   const request = self.createGetRequest({ */
+    /*     url: `http://localhost:3030/api/mongos?page=1&limit=0`, */
+    /*   }); */
+    /*   self.server.inject(request, (response) => { */
+    /*     response.statusCode.should.equal(200); */
+    /*     const r = JSON.parse(response.payload); */
+    /*     console.log(r); */
+    /*     done(); */
+    /*   }); */
+    /* }); */

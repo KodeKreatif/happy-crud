@@ -459,6 +459,38 @@ doTest() {
         done();
       });
     });
+    it('should be able to list all records with limit=0', (done)=> {
+      const postRequest = self.createPostRequest({
+        url: 'http://localhost:3030/api/users',
+        payload: {
+          a:'x', b: 'y', c: 0
+        }
+      });
+      // Fill data to more than 10 item
+      self.server.inject(postRequest, (response) => {
+        self.server.inject(postRequest, (response) => {
+          self.server.inject(postRequest, (response) => {
+            self.server.inject(postRequest, (response) => {
+              self.server.inject(postRequest, (response) => {
+                self.server.inject(postRequest, (response) => {
+                  self.server.inject(postRequest, (response) => {
+                    const request = self.createGetRequest({
+                      url: `http://localhost:3030/api/users?page=1&limit=0`,
+                    });
+                    self.server.inject(request, (response) => {
+                      response.statusCode.should.equal(200);
+                      const r = JSON.parse(response.payload);
+                      should(r.data.length).equal(13);
+                      done();
+                    });
+                  })
+                })
+              })
+            })
+          })
+        })
+      })
+    });
   }); // describe Basic list
   
   describe('Before and After function', ()=> {
@@ -475,7 +507,7 @@ doTest() {
         const r = JSON.parse(response.payload);
         // This someKey has been added on after function
         r.someKey.should.equal('someString');
-        r.lastId.should.equal(8);
+        r.lastId.should.equal(15);
         const key = r.lastId;
         const request = self.createGetRequest({
           url: `http://localhost:3030/api/user/${key}`,
@@ -483,7 +515,7 @@ doTest() {
         self.server.inject(request, (response) => {
           response.statusCode.should.equal(200);
           const r = JSON.parse(response.payload);
-          r.id.should.equal(8);
+          r.id.should.equal(15);
           r.a.should.equal('a');
           r.b.should.equal('b');
           // This c value has been manipulated to 9
@@ -569,14 +601,13 @@ doTest() {
         response.statusCode.should.equal(200);
         const r = JSON.parse(response.payload);
         r.someKey.should.equal('someString');
-        should(r.totalPages).equal(3);
-        should(r.totalCount).equal(6);
+        should(r.totalPages).equal(7);
+        should(r.totalCount).equal(13);
         should(r.page).equal(2);
         should(r.limit).equal(2);
         should(r.data.length).equal(2);
         done();
       });
-
     });
   }); // describe Before and After function
 }
