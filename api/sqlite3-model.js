@@ -164,6 +164,9 @@ sqliteList(params) {
   let sort = params.sort || 'desc'
   let skip = (page - 1) * limit;
   let args =  ` order by ${sortBy} ${sort} limit ${skip},${limit}`;
+  if (limit === 0) {
+    args =  ` order by ${sortBy} ${sort}`;
+  }
   let operator = 'and';
   if (params.operator) {
     operator = params.operator;
