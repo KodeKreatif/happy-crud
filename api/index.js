@@ -165,6 +165,7 @@ installCreate(options) {
     },
     config: {
       auth: options.authentications.create || null,
+      payload : options.payload || null,
     }
   };
   if (self.controller.validation().create) {
@@ -209,6 +210,7 @@ installUpdate(options) {
     },
     config: {
       auth: options.authentications.update|| null,
+      payload : options.payload || null,
     }
   };
   if (self.controller.validation().update) {
