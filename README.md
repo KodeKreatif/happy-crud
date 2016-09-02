@@ -2,46 +2,70 @@
 
 <img src="https://cloud.githubusercontent.com/assets/2534060/14002981/0cfda8ce-f182-11e5-888f-31d76ebae7e3.png">
 ---
-Happy CRUD is a Hapi crud abstraction. There are some ES7 features used in happy-crud, you need to setup Babel ``stage-3`` for your apps.
+Happy CRUD is a Hapi crud abstraction. There are some ES7 features used in happy-crud, you need to setup Babel ``stage-3`` and these babel dependencies :
+
+- babel-core
+- babel-preset-stage-3
+- babel-polyfill
 
 ## Example
 Consider the following code:
 
 ```
 'use strict';
+
+// This tiny hack is needed
+require('babel-register')({
+  "only" : ["node_modules/happy-crud/api/*.js", "index.js"]
+})
+
 const Hapi = require('hapi');
+const Sqlite3 = require('sqlite3');
 
+// Create a server with a host and port
 const server = new Hapi.Server();
-const schema = {
-  id: {
-    type: Number,
-    primaryKey: true,
-    autoIncrement: true
-  },
-  a: String,
-  b: String,
-  c: Number,
-}
+server.connection({
+  host: 'localhost',
+  port: 8000
+});
 
-const options = {
-  word: 'user',
-  path: '/api',
-  mount: '/v1',
+// Load the Happy-Crud
+const Happy = require('happy-crud');
+
+var User = function(server, options, next) {
+  this.server = server;
+
+  options.schema = {
+    id: {
+      type: Number,
+      primaryKey: true,
+      autoIncrement: true
+    },
+    name: String,
+    age: String,
+    createdAt: Date,
+  };
+  options.db = new Sqlite3.Database('/tmp/data.db');
+  options.dbType = 'sqlite3';
+  options.word = 'user';
+  options.path = '/api';
+  options.mount = '/';
+  options.table = 'users';
 
   // Example of bypassing auth on one of four routes (create, read, update, list).
-  authentications : {
+  options.authentications = {
     list : false
   }
 
-  // Example of adding before and after function on one of four routes (create, read, update, list).
-  // This useful for custom data manipulation.
-
   /**
+   * Example of adding before and after function on one of four routes (create, read, update, list).
+   * This useful for custom data manipulation.
+   *
    * The before function should be a promise with 2 parameters :
    *    - request : Hapi's request
    *    - reply : Hapi's reply
    */
-  beforeFunc : {
+  options.beforeFunc = {
     list : function(request, reply) {
       return new Promise((resolve, reject) => {
         // Do something before Happy-Crud query. Ex : manipulate payload.
@@ -56,7 +80,7 @@ const options = {
    *    - reply : Hapi's reply
    *    - result : The result object of Hapy-Crud query. You could manipulate this result before pass it to reply();
    */
-  afterFunc : {
+  options.afterFunc = {
     list : function(request, reply, result) {
       return new Promise((resolve, reject) => {
         // Do something after Happy-Crud query. Ex : add something to result.
@@ -66,14 +90,36 @@ const options = {
     }
   }
 
+  // Initiate the happiness
+  this.happy = new Happy(server, options);
+
 }
 
-const db = this.setupDb();
-const table = 'testa';
-const model = new Sqlite3Model(db, table, schema);
-const ctrl = new ControllerA(model);
-const api = new HappyCrud(server, ctrl, options);
+// Declare the plugin
+const UserPlugin = function(server, options, next) {
+  new User(server, options, next);
+  next();
+};
+UserPlugin.attributes = {
+  pkg : {
+    name : 'users'
+  }
+}
 
+// Register the plugin
+server.register([UserPlugin], (err) => {
+  if (err) {
+    console.log('Failed to load plugin');
+  }
+})
+
+// Start the server
+server.start((err) => {
+  if (err) {
+     throw err;
+  }
+  console.log('Server running at:', server.info.uri);
+});
 
 ```
 
