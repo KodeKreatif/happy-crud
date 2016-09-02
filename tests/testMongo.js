@@ -33,6 +33,9 @@ constructor(server) {
     path: '/api',
     mount: '/',
   }
+  options.payload = {
+    maxBytes : 100
+  }
   const model = new MongoDbModel(db, col, schema);
   const ctrl = new ControllerMongo(model);
   const api = new HappyCrud(server, ctrl, options);
@@ -63,6 +66,22 @@ doTest() {
         r.c.should.equal(1);
         mongoose.Types.ObjectId.isValid(r._id).should.equal(true);
         lastId = r._id;
+        done();
+      });
+    });
+    it('should be fail to create a record that infringe the payload limit', (done)=> {
+      let a = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
+      for (var i = 0;i < 10;i++) {
+        a += a;
+      }
+      const request = self.createPostRequest({
+        url: 'http://localhost:3030/api/mongos',
+        payload: {
+          a : a, b: 'b', c: 1
+        }
+      });
+      self.server.inject(request, (response) => {
+        response.statusCode.should.equal(400);
         done();
       });
     });
@@ -103,6 +122,24 @@ doTest() {
         const r = JSON.parse(response.payload);
         r.b.should.equal('b1');
         r.c.should.equal(2);
+        done();
+      });
+    });
+    it('should be fail to create a record that infringe the payload limit', (done)=> {
+      let a = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
+      for (var i = 0;i < 10;i++) {
+        a += a;
+      }
+      const key = lastId;
+      const request = self.createPutRequest({
+        url: `http://localhost:3030/api/mongo/${key}`,
+        payload: {
+          b: a,
+          c: 2
+        }
+      });
+      self.server.inject(request, (response) => {
+        response.statusCode.should.equal(400);
         done();
       });
     });
