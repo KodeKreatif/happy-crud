@@ -254,6 +254,17 @@ doTest() {
         done();
       });
     });
+    it('should be able to list records with filter (negation)', (done)=> {
+      const request = self.createGetRequest({
+        url: `http://localhost:3030/api/mongos?a=!(somestring1)`,
+      });
+      self.server.inject(request, (response) => {
+        response.statusCode.should.equal(200);
+        const r = JSON.parse(response.payload);
+        should(r.data.length).equal(6);
+        done();
+      });
+    });
     it('should be able to list records with wrong filterKey, return nothing', (done)=> {
       const request = self.createGetRequest({
         url: `http://localhost:3030/api/mongos?abc=somestring`,

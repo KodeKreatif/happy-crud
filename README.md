@@ -136,11 +136,13 @@ Happy CRUD has some reserved words that used as helper in query :
 - `gte` - greather than or equal
 - `lt` - less than
 - `lte` - less than or equal
+- `!` - negation
 
 Example usage :
 
 - `/v1/api/users?name=search(omama)` - match the record(s) that has value `hello` in `name` field.
 - `/v1/api/users?birthDate=gt(2016-07-03T05:24:02.346Z)` - fetch the record(s) that has newer date than `2016-07-03T05:24:02.346Z`
+- `/v1/api/users?name=!(omama)` - match the record(s) that it's `name` field does not equal to `omama`.
 
 `gt`, `gte`, `lt` and `lte` also works for date if only the provided value is a valid Date ISO string.
 
