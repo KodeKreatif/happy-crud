@@ -109,6 +109,7 @@ mongoList(params) {
     'lt',      // lt(), less than
     'lte',     // lte(), less than or equal
     'search',  // search(), search
+    '!',       // !(), negation
   ]
 
   // Parse reserved word
@@ -167,6 +168,11 @@ mongoList(params) {
           let index = args['$and'].length - 1;
           args['$and'][index][paramsKey[i]] = { '$lte' : reservedParams[k].val };
         }
+        if (reservedParams[k].key === '!') {
+          args['$and'].push({});
+          let index = args['$and'].length - 1;
+          args['$and'][index][paramsKey[i]] = { '$ne' : reservedParams[k].val };
+        }
       }
     } else {
       args[paramsKey[i]] = params[paramsKey[i]];
@@ -177,7 +183,6 @@ mongoList(params) {
   if (args['$and'] && args['$and'].length < 1) {
     delete(args['$and']);
   }
-
   return new Promise((resolve, reject) => {
     self.model().count(args, (err, count) => {
       if (err) {

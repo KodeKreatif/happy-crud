@@ -333,6 +333,17 @@ doTest() {
         done();
       });
     });
+    it('should be able to list records with filter (negation)', (done)=> {
+      const request = self.createGetRequest({
+        url: `http://localhost:3030/api/users?a=!(somestring)`,
+      });
+      self.server.inject(request, (response) => {
+        response.statusCode.should.equal(200);
+        const r = JSON.parse(response.payload)
+        should(r.data.length).equal(4);
+        done();
+      });
+    });
     it('should be able to list records with search', (done)=> {
       const request = self.createGetRequest({
         url: `http://localhost:3030/api/users?a=search(some)`,

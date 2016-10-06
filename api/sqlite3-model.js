@@ -192,6 +192,7 @@ sqliteList(params) {
     'lt',      // lt(), less than
     'lte',     // lte(), less than or equal
     'search',  // search(), search
+    '!',       // !(), negation
   ]
 
   // Parse reserved word
@@ -283,6 +284,12 @@ sqliteList(params) {
             }
             filterArgs += ` ${paramsKey[i]} <= ${reservedParams[k].val}`;
           }
+          if (reservedParams[k].key === '!') {
+            if (filterArgs.length > 6) {
+              filterArgs += ` ${operator}`;
+            }
+            filterArgs += ` ${paramsKey[i]} != '${reservedParams[k].val}'`;
+          }
         }
       } else {
         if (filterArgs.indexOf('where') < 0) {
@@ -295,7 +302,6 @@ sqliteList(params) {
       }
     }
   }
-
   return new Promise((resolve, reject) => {
     let sqlCount = `select count(1) from ${self.table} ${filterArgs}`;
     self.db.get(sqlCount, [], function(err, count) {
