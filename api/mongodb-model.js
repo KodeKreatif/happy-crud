@@ -14,10 +14,8 @@ constructor(db, col, schema) {
   this.impl.update = this.mongoUpdate;
   this.impl.delete = this.mongoDelete;
   this.impl.list = this.mongoList;
-  
-  // Setup db and emit 'ready' when connection succeeded
-  mongoose.connect(db);
-  mongoose.connection.once('open', () => {
+
+  var register = function(){
     self.model = function(){
       var registered = false;
       var m;
@@ -33,7 +31,17 @@ constructor(db, col, schema) {
       return m;
     }
     self.emit('ready');
-  })
+  }
+  
+  // Setup db and emit 'ready' when connection succeeded
+  if (parseInt(mongoose.connection.readyState) == 2) {
+    register();
+  } else {
+    mongoose.connect(db);
+    mongoose.connection.once('open', () => {
+      register();
+    })
+  }
 }
 
 mongoCreate(data) {
